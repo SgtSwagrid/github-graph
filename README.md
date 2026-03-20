@@ -23,7 +23,7 @@ If this meets your use case, then great.
 However, a key limitation is that nested repositories have to be fully contained within isolated directories.
 In practice, and in fact for most of the examples listed, you'll instead want this content to be mixed in with everything else.
 
-### What's wrong with extenal references?
+### What's wrong with external references?
 
 Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
 why not just link to them and direct users or build tools straight to the source?
