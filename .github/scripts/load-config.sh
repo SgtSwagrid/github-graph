@@ -25,7 +25,7 @@ jq -r '
   "TARGET_OWNER=\(.target.owner)",
   "TARGET_NAME=\(.target.name)",
   "TARGET_REPOSITORY=\(.target.repository)",
-  "TARGET_BRANCH"=\(.target.branch)",
+  "TARGET_BRANCH=\(.target.branch)",
   "TARGET_SYNC_BRANCH=\(.target.syncBranch)",
   "TARGET_ROOT=\(.target.root)",
   "TARGET_URL=\(.target.url)",
