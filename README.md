@@ -50,7 +50,7 @@ as (a) the process stops if there are no changes, and (b) each propagation step 
 
 The following limitations apply.
 Relaxation of either is considered out-of-scope and won't be addressed.
-That being said, if you want to tackle these, I'd be a very greatful PR recipient.
+That being said, if you wanted to tackle these, I'd be a very grateful PR recipient.
 
 ### Merge semantics
 
