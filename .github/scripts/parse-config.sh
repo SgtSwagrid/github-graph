@@ -18,7 +18,7 @@ set -euo pipefail
 
 CONFIG_PATH="${CONFIG_PATH:-.github/graph.json}"
 
-CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.md \
+CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.md --arg config_path "$CONFIG_PATH" \
   '
     (. | del(.children)) as $global |
     (.children // []) |
@@ -34,6 +34,7 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
     map(
       ($ENV.GITHUB_REPOSITORY / "/") as [$owner, $name] |
       ("https://github.com/" + $ENV.GITHUB_REPOSITORY) as $url |
+      ($url + "/tree/" + $ENV.DEFAULT_BRANCH) as $branchUrl |
       .source.owner = $owner |
       .source.name = $name |
       .source.repository = $ENV.GITHUB_REPOSITORY |
@@ -43,7 +44,7 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
       .source.url = $url |
       .source.commitUrl = $url + "/commit/" + $ENV.GITHUB_SHA |
       .source.branchUrl = $url + "/tree/" + $ENV.DEFAULT_BRANCH |
-      .source.configUrl = $url + "/tree/" + $ENV.DEFAULT_BRANCH + "/" + $ENV.CONFIG_PATH
+      .source.configUrl = $branchUrl + "/" + $config_path
     ) |
     map(
       (.target.owner + "/" + .target.name) as $repository |
