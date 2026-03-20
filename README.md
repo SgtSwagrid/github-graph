@@ -27,11 +27,9 @@ In practice, and in fact for most of the examples listed, you'll instead want th
 
 Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
 why not just link to them and have users or build tools take the information straight from the source?
-
 The computer-sciency answer is that sometimes, especially for small things, inlines are more efficient despite the extra duplication.
 But the real reason is that many tools don't support indirection.
 You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
-
 Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
 
 ## Architecture
