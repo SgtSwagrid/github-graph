@@ -51,7 +51,7 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
       ("https://github.com/" + $repository) as $url |
       .target.repository = $repository |
       .target.branch //= "" |
-      .target.syncBranch //= "sync/" + .source.repository |
+      .target.syncBranch //= "sync:" + .source.repository + "//" + .source.branch + "//" + .source.root |
       .target.root //= "." |
       .target.url = $url
     ) |
