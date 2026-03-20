@@ -49,10 +49,11 @@ See [configuration](https://github.com/SgtSwagrid/github-graph?tab=readme-ov-fil
 
 ### 3. Create a Personal Access Token
 
-In order for GitHub Actions to automatically create pull requests for the target repositories,
-you'll need a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) with appropriate permissions:
+In order for GitHub Actions to automatically create pull requests in the target repositories,
+you'll need a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) with appropriate permissions in each:
 - Push to unprotected branches
 - Open pull requests
+
 Once created, add it to your source repository's secrets under **Settings → Secrets → Actions**.
 By default, `github-graph` expects the token to be called `GH_TOKEN`.
 Don't worry if you need to use a different token for each target repository,
