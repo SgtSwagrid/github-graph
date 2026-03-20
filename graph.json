@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/SgtSwagrid/github-graph/main/graph.schema.json",
   "ignore": [
     "README.md",
     "LICENSE.md",

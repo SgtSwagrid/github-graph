@@ -3,6 +3,7 @@ name: Sync
 on:
   push:
   workflow_dispatch:
+  workflow_call:
 
 # Cancel in-progress runs when starting a new one.
 concurrency:
@@ -15,17 +16,23 @@ jobs:
     name: Initialise
     runs-on: ubuntu-latest
     outputs:
-      children: ${{ steps.list.outputs.children }}
+      children: ${{ steps.parse.outputs.children }}
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Checkout github-graph
+        uses: actions/checkout@v4
+        with:
+          repository: SgtSwagrid/github-graph
+          path: .github-graph
+
       - name: Parse config
-        id: list
+        id: parse
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: bash .github/scripts/parse-config.sh
+        run: bash .github-graph/scripts/parse-config.sh
 
   # Synchronise each target repository.
   sync:
@@ -42,6 +49,12 @@ jobs:
         child: ${{ fromJson(needs.init.outputs.children) }}
 
     steps:
+      - name: Checkout github-graph
+        uses: actions/checkout@v4
+        with:
+          repository: SgtSwagrid/github-graph
+          path: .github-graph
+
       - name: Checkout source
         uses: actions/checkout@v4
         with:
@@ -57,12 +70,12 @@ jobs:
           path: target
 
       - name: Load config
-        run: bash source/.github/scripts/load-config.sh '${{ toJson(matrix.child) }}'
+        run: bash .github-graph/scripts/load-config.sh '${{ toJson(matrix.child) }}'
 
       - name: Merge files
-        run: bash source/.github/scripts/merge-files.sh
+        run: bash .github-graph/scripts/merge-files.sh
 
       - name: Commit changes
         env:
           GH_TOKEN: ${{ secrets[matrix.child.token] }}
-        run: bash source/.github/scripts/open-pr.sh
+        run: bash .github-graph/scripts/open-pr.sh

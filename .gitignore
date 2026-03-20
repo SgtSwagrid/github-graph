@@ -1,0 +1,7 @@
+# IDEs
+.idea/
+.vscode/
+
+# Agents
+.claude/settings.local.json
+.claude/worktrees/

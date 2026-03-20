@@ -58,7 +58,8 @@ done < <(git -C source ls-files -- "$SOURCE_ROOT")
 
 # Copy every tracked file from the source to the target repository.
 for file in "${!SOURCE_FILES[@]}"; do
-  if is_ignored "$file"; then
+  relative="${file#"$SOURCE_ROOT/"}"
+  if is_ignored "$relative"; then
     echo "Skipped: $file"
   else
     dest=$(target_path "$file")
@@ -85,7 +86,7 @@ for file in "${SOURCE_DELETED[@]}"; do
   # Ignore because file is outside SOURCE_ROOT.
   elif [[ "$SOURCE_ROOT" != "." && "$file" != "$SOURCE_ROOT"/* ]]; then :
   # Ignore because file is in ignore list.
-  elif is_ignored "$file"; then :
+  elif is_ignored "${file#"$SOURCE_ROOT/"}"; then :
   # Ignore because file was re-added.
   elif [[ -n "${SOURCE_FILES[$file]+_}" ]]; then :
   # Delete the file if none of the exclusions apply.

@@ -18,7 +18,12 @@ set -euo pipefail
 
 CONFIG_PATH="${CONFIG_PATH:-.github/graph.json}"
 
-CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.md --arg config_path "$CONFIG_PATH" \
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+CHILDREN=$(jq \
+  -c \
+  --rawfile default_pr_body "$SCRIPT_DIR/../templates/pull-request-body.md" \
+  --arg config_path "$CONFIG_PATH" \
   '
     (. | del(.children)) as $global |
     (.children // []) |
