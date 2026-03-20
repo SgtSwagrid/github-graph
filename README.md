@@ -6,6 +6,21 @@ Changes to the content of the _source_ are automatically applied to each of a se
 This is by means of an automatic pull request that is opened in each.
 Can be chained across multiple steps as an arbitrary [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph).
 
+## Use Cases
+
+The typical use case might involve an organisation with a canonical license, style rulebook, [linter](https://en.wikipedia.org/wiki/Lint_(software)) configuration, set of IDE plugin recommendations, contributer information, code of conduct, gitignore, etc.
+With multiple projects, this information is duplicated unnecessarily.
+When updating something, one is forced to either go through the tedious process of updating each project individually,
+or accept that things will get out of sync.
+But no longer! With `git-graph`, all of this and more can be defined once, and used everywhere.
+
+### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
+
+Git submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
+If this meets your use case, then great.
+However, a key limitation is that nested repositories have to be fully contained within isolated directories.
+In practice, and in fact for most of the examples listed, you'll instead want this content to be mixed in with everything else.
+
 ## Architecture
 
 Follows a push-based model.
