@@ -1,0 +1,21 @@
+{
+  "ignore": [
+    "README.md",
+    "LICENSE.md",
+    ".github/*"
+  ],
+  "children": [
+    {
+      "target": {
+        "owner": "SgtSwagrid",
+        "name": "scala-website-template"
+      }
+    },
+    {
+      "target": {
+        "owner": "SgtSwagrid",
+        "name": "scala-library-template"
+      }
+    }
+  ]
+}

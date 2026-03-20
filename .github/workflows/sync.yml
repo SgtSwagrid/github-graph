@@ -1,0 +1,68 @@
+name: Sync
+
+on:
+  push:
+  workflow_dispatch:
+
+# Cancel in-progress runs when starting a new one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Build the list of target repositories from the config.
+  init:
+    name: Initialise
+    runs-on: ubuntu-latest
+    outputs:
+      children: ${{ steps.list.outputs.children }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Parse config
+        id: list
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: bash .github/scripts/parse-config.sh
+
+  # Synchronise each target repository.
+  sync:
+    name: Sync → ${{ matrix.child.target.repository }}
+    needs: init
+    if: needs.init.outputs.children != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        child: ${{ fromJson(needs.init.outputs.children) }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.child.source.branch }}
+          path: source
+
+      - name: Checkout target
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.child.target.owner }}/${{ matrix.child.target.name }}
+          ref: ${{ matrix.child.target.branch }}
+          token: ${{ secrets[matrix.child.token] }}
+          path: target
+
+      - name: Load config
+        run: bash source/.github/scripts/load-config.sh '${{ toJson(matrix.child) }}'
+
+      - name: Merge files
+        run: bash source/.github/scripts/merge-files.sh
+
+      - name: Commit changes
+        env:
+          GH_TOKEN: ${{ secrets[matrix.child.token] }}
+        run: bash source/.github/scripts/open-pr.sh
