@@ -8,7 +8,7 @@ and can be chained across multiple steps as an arbitrary [directed acyclic graph
 
 ## Use Cases
 
-The typical use case might involve an organisation with a canonical license, style rulebook, [linter](https://en.wikipedia.org/wiki/Lint_(software)) configuration, set of IDE plugin recommendations, contributer information, code of conduct, gitignore, etc.
+The typical use case might involve an organisation with a canonical license, style rulebook, [linter](https://en.wikipedia.org/wiki/Lint_(software)) configuration, set of IDE plugin recommendations, contributer information, code of conduct, [gitignore](https://github.com/github/gitignore), etc.
 With multiple projects, this information is duplicated unnecessarily.
 When updating something, one is forced to either go through the tedious process of updating each project individually,
 or accept that things will get out of sync.
@@ -48,7 +48,19 @@ as (a) the process stops if there are no changes, and (b) each propagation step 
 
 ## Limitations
 
+The following limitations apply.
+Relaxation of any is considered out-of-scope and won't be addressed.
+That being said, if you want to tackle these, I'd be a very greatful PR recipient.
+
+### Merge semantics
+
 Updated files are never "merged", but simply overwrite whatever exists downstream.
 This is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
 with the understanding that copies shouldn't be modified.
-There are no plans to relax this limitation.
+
+### Platform support
+
+This approach is heavily coupled with the GitHub ecosystem.
+We assume GitHub URL formats, the availability of GitHub Actions, with GitHub-provided environment variables.
+No support is offered for other platforms besides GitHub
+(I'm very sorry [GitLab](https://gitlab.com), [Bitbucket](https://bitbucket.org), etc.).
