@@ -14,12 +14,25 @@ When updating something, one is forced to either go through the tedious process 
 or accept that things will get out of sync.
 But no longer! With `git-graph`, all of this and more can be defined once, and used everywhere.
 
+## Alternatives
+
 ### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
 
 Git submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
 If this meets your use case, then great.
 However, a key limitation is that nested repositories have to be fully contained within isolated directories.
 In practice, and in fact for most of the examples listed, you'll instead want this content to be mixed in with everything else.
+
+### What's wrong with extenal references?
+
+Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
+why not just link to them and have users or build tools take the information straight from the source?
+
+The computer-sciency answer is that sometimes, especially for small things, inlines are more efficient despite the extra duplication.
+But the real reason is that many tools don't support indirection.
+You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
+
+Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
 
 ## Architecture
 
