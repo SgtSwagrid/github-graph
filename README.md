@@ -14,23 +14,153 @@ When updating something, one is forced to either go through the tedious process 
 or accept that things will get out of sync.
 But no longer! With `git-graph`, all of this and more can be defined once, and used everywhere.
 
-## Alternatives
+## Installation
 
-### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
+### 1. Add the workflow
 
-Git submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
-If this meets your use case, then great.
-However, a key limitation is that nested repositories have to be fully contained within isolated directories.
-In practice, and in fact for most of the examples listed, you'll instead want this content to be mixed in with everything else.
+In your source repository, create `.github/workflows/sync.yml`:
 
-### What's wrong with external references?
+```yaml
+name: Sync
 
-Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
-why not just link to them and direct users or build tools straight to the source?
-The computer-sciency answer is that sometimes, especially for small things, inlines are more efficient despite the extra duplication.
-But the real reason is that many tools don't support indirection.
-You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
-Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    uses: SgtSwagrid/github-graph/.github/workflows/sync.yml@main
+    secrets: inherit
+```
+
+### 2. Add the config
+
+Create `.github/graph.json` in your source repository:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/SgtSwagrid/github-graph/main/graph.schema.json",
+  "ignore": ["README.md", "LICENSE.md", ".github/*"],
+  "children": [
+    {
+      "target": { "owner": "my-org", "name": "my-other-repo" }
+    }
+  ]
+}
+```
+
+On every push, github-graph will open a pull request in each target repository with any changed files.
+
+### 3. Set up a token
+
+By default, github-graph uses the `GH_TOKEN` secret. This token must have permission to push branches and open pull requests in each target repository. Add it to your source repository's secrets under **Settings → Secrets → Actions**.
+
+To use a different secret name, set `token` in the config.
+
+---
+
+## Configuration
+
+All fields except `target.owner` and `target.name` are optional. Fields set at the top level are inherited by all children but can be overridden per-child.
+
+### `children`
+
+A list of target repositories to sync files into.
+
+```json
+{
+  "children": [
+    { "target": { "owner": "my-org", "name": "repo-a" } },
+    { "target": { "owner": "my-org", "name": "repo-b" } }
+  ]
+}
+```
+
+### `ignore`
+
+Glob patterns for files to exclude from syncing, relative to the source root. Patterns follow `*`, `**`, `?`, and `[...]` syntax. Top-level patterns are merged with any per-child patterns.
+
+```json
+{
+  "ignore": ["README.md", ".github/*", "docs/**"]
+}
+```
+
+### `source`
+
+| Field    | Description                                            | Default              |
+|----------|--------------------------------------------------------|----------------------|
+| `branch` | Branch to sync from.                                   | Repository default   |
+| `root`   | Directory within the source repository to copy from.   | `"."`                |
+
+### `target`
+
+| Field        | Description                                                | Default              |
+|--------------|------------------------------------------------------------|----------------------|
+| `owner`      | Owner of the target repository. **Required.**              |                      |
+| `name`       | Name of the target repository. **Required.**               |                      |
+| `branch`     | Branch to sync into.                                       | Repository default   |
+| `root`       | Directory within the target repository to copy files into. | `"."`                |
+| `syncBranch` | Staging branch used to open pull requests.                 | Auto-generated       |
+
+### `token`
+
+The name of the GitHub Actions secret containing the access token.
+
+```json
+{ "token": "MY_CUSTOM_TOKEN" }
+```
+
+### `pullRequest`
+
+| Field   | Description                          |
+|---------|--------------------------------------|
+| `title` | Template string for the PR title.    |
+| `body`  | Template string for the PR body.     |
+
+The following variables are available in templates:
+
+| Variable             | Description                                      |
+|----------------------|--------------------------------------------------|
+| `$SOURCE_OWNER`      | Owner of the source repository.                  |
+| `$SOURCE_NAME`       | Name of the source repository.                   |
+| `$SOURCE_REPOSITORY` | Full name of the source repository (`owner/name`). |
+| `$SOURCE_URL`        | URL of the source repository.                    |
+| `$SOURCE_BRANCH`     | Branch being synced from.                        |
+| `$SOURCE_BRANCH_URL` | URL of the source branch.                        |
+| `$SOURCE_ROOT`       | Source root directory.                           |
+| `$SOURCE_COMMIT`     | SHA of the commit that triggered the sync.       |
+| `$SOURCE_COMMIT_URL` | URL of the triggering commit.                    |
+| `$SOURCE_CONFIG_URL` | URL of the `graph.json` config file.             |
+| `$TARGET_OWNER`      | Owner of the target repository.                  |
+| `$TARGET_NAME`       | Name of the target repository.                   |
+| `$TARGET_REPOSITORY` | Full name of the target repository (`owner/name`). |
+| `$TARGET_URL`        | URL of the target repository.                    |
+| `$TARGET_BRANCH`     | Branch being synced into.                        |
+| `$TARGET_ROOT`       | Target root directory.                           |
+
+### Example
+
+Sync a shared CI configuration from a template repository into several projects, excluding per-project files:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/SgtSwagrid/github-graph/main/graph.schema.json",
+  "ignore": ["README.md", "LICENSE.md", ".github/*"],
+  "source": {
+    "root": "template"
+  },
+  "children": [
+    {
+      "target": { "owner": "my-org", "name": "project-a" }
+    },
+    {
+      "target": { "owner": "my-org", "name": "project-b" },
+      "ignore": ["config/local.yml"]
+    }
+  ]
+}
+```
 
 ## Architecture
 
@@ -46,6 +176,24 @@ in response to which pull requests are automatically opened.
 
 You needn't worry about circular dependencies creating a runaway robot takeover,
 as (a) the process stops if there are no changes, and (b) each propagation step still requires manual review.
+
+## Alternatives
+
+### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
+
+Git submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
+If this meets your use case, then great.
+However, a key limitation is that nested repositories have to be fully contained within isolated directories.
+In practice, and in fact for most of the example use cases listed, you'll instead want this content to be mixed in with everything else.
+
+### What's wrong with external references?
+
+Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
+why not just link to them and direct users or build tools straight to the source?
+The computer-sciency answer is that sometimes, especially for small things, inlines are more efficient despite the extra duplication.
+But the real reason is that many tools don't support indirection.
+You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
+Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
 
 ## Limitations
 
