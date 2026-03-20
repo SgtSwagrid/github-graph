@@ -42,8 +42,8 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
       .source.root //= "." |
       .source.url = $url |
       .source.commitUrl = $url + "/commit/" + $ENV.GITHUB_SHA |
-      .source.configUrl = $url + "/tree/" + $ENV.GITHUB_REF_NAME + "/" + $ENV.CONFIG_PATH |
-      .source.branchUrl //= $url + "/tree/" + $ENV.DEFAULT_BRANCH
+      .source.branchUrl = $url + "/tree/" + $ENV.DEFAULT_BRANCH |
+      .source.configUrl = $url + "/tree/" + $ENV.DEFAULT_BRANCH + "/" + $ENV.CONFIG_PATH
     ) |
     map(
       (.target.owner + "/" + .target.name) as $repository |
