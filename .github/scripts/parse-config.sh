@@ -52,7 +52,7 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
       .target.repository = $repository |
       .target.branch //= "" |
       .target.syncBranch //= "sync#" + .source.repository + "_" + .source.branch + "_" + .source.root +
-        "->" + .target.root + ";" |
+        "->" + (.target.root // ".") + ";" |
       .target.root //= "." |
       .target.url = $url
     ) |
