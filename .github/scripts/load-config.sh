@@ -30,11 +30,15 @@ jq -r '
   "TARGET_ROOT=\(.target.root)",
   "TARGET_URL=\(.target.url)",
   "IGNORE=\(.ignore | tojson)",
-  "PR_TITLE=\(.pullRequest.title)",
-  "PR_BODY=\(.pullRequest.body)"
+  "PR_TITLE=\(.pullRequest.title)"
 ' <<< "$CHILD" >> "$GITHUB_ENV"
 
 # TARGET_BRANCH requires a runtime fallback to the target repository's default branch.
 TARGET_BRANCH=$(jq -r '.target.branch' <<< "$CHILD")
-DEFAULT_BRANCH=$(git -C target symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||')
+DEFAULT_BRANCH=$(git -C target ls-remote --symref origin HEAD | sed -n 's|^ref: refs/heads/\(.*\)\tHEAD|\1|p')
 echo "TARGET_BRANCH=${TARGET_BRANCH:-$DEFAULT_BRANCH}" >> "$GITHUB_ENV"
+
+# PR_BODY may contain newlines, so it requires the GitHub Actions multiline format.
+PR_BODY=$(jq -r '.pullRequest.body' <<< "$CHILD")
+delimiter="$(openssl rand -hex 8)"
+{ echo "PR_BODY<<$delimiter"; echo "$PR_BODY"; echo "$delimiter"; } >> "$GITHUB_ENV"

@@ -29,7 +29,7 @@ jobs:
 
   # Synchronise each target repository.
   sync:
-    name: Sync → ${{ matrix.child.target.repository }}
+    name: Sync → ${{ matrix.child.target.name }}
     needs: init
     if: needs.init.outputs.children != '[]'
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
       - name: Checkout target
         uses: actions/checkout@v4
         with:
-          repository: ${{ matrix.child.target.owner }}/${{ matrix.child.target.name }}
+          repository: ${{ matrix.child.target.repository }}
           ref: ${{ matrix.child.target.branch }}
           token: ${{ secrets[matrix.child.token] }}
           path: target
