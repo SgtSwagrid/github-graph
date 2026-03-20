@@ -1,6 +1,6 @@
 # github-graph
 
-A tool to duplicate files across multiple GitHub repositories.
+<ins>A tool to duplicate files across multiple GitHub repositories.</ins>
 An upstream _source_ repository serves as the single source of truth for a collection of files.
 Changes to the content of the _source_ are automatically applied to each of a series of downstream _target_ respositories.
 This is by means of an automatic pull request that is opened in each,
