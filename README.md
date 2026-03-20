@@ -1,6 +1,6 @@
 # github-graph
 
-<ins>A tool to duplicate files across multiple GitHub repositories.</ins>
+A tool to duplicate files across multiple GitHub repositories.
 An upstream _source_ repository serves as the single source of truth for a collection of files.
 Changes to the content of the _source_ are automatically applied to each of a series of downstream _target_ respositories.
 This is by means of an automatic pull request that is opened in each,
@@ -38,8 +38,9 @@ Additionally, the use of external references can violate the principle of [herme
 
 Follows a push-based model.
 This is true both in the [git](https://git-scm.com/docs/git-push) sense and in the [reactive programming](https://www.baeldung.com/cs/reactive-programming) sense.
+Changes _pushed_ to the source are _eagerly_ propagated (i.e. _pushed_) downstream.
 A [GitHub Actions](https://github.com/features/actions) workflow in the source repository listens for pushes to a designated branch and directory,
-in response to which pull requests are opened.
+in response to which pull requests are automatically opened.
 
 ### Circular dependencies
 
@@ -50,7 +51,7 @@ as (a) the process stops if there are no changes, and (b) each propagation step 
 
 The following limitations apply.
 Relaxation of either is considered out-of-scope and won't be addressed.
-That being said, if you wanted to tackle these, I'd be a very grateful PR recipient.
+That being said, if you wanted to tackle these yourself, I'd be a very grateful PR recipient.
 
 ### Merge semantics
 
