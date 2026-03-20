@@ -1,4 +1,4 @@
-#github-graph
+# github-graph
 
 A tool to duplicate files across multiple GitHub repositories.
 An upstream _source_ repository serves as the single source of truth for a collection of files.
