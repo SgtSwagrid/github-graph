@@ -1,4 +1,4 @@
-## Synced files from $SOURCE_REPOSITORY.
+## Synced files from $SOURCE_NAME.
 
 Applied automatic synchronisation of updated files from [**$SOURCE_REPOSITORY**]($SOURCE_URL).
 

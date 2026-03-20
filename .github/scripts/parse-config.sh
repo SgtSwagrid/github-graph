@@ -42,9 +42,8 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
       .source.root //= "." |
       .source.url = $url |
       .source.commitUrl = $url + "/commit/" + $ENV.GITHUB_SHA |
-      .source.configUrl = $url + "/blob/" + $ENV.GITHUB_REF_NAME + "/" + $ENV.CONFIG_PATH |
-      .source.branchUrl //= $url + "/blob/" + $ENV.DEFAULT_BRANCH
-
+      .source.configUrl = $url + "/tree/" + $ENV.GITHUB_REF_NAME + "/" + $ENV.CONFIG_PATH |
+      .source.branchUrl //= $url + "/tree/" + $ENV.DEFAULT_BRANCH
     ) |
     map(
       (.target.owner + "/" + .target.name) as $repository |
@@ -56,7 +55,7 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
       .target.url = $url
     ) |
     map(
-      .pullRequest.title //= "[github-graph]: Synced files from %SOURCE_REPOSITORY." |
+      .pullRequest.title //= "[github-graph]: Synced files from $SOURCE_NAME." |
       .pullRequest.body //= $default_pr_body
     ) |
     map(
