@@ -2,7 +2,7 @@
 
 A tool to duplicate files across multiple GitHub repositories.
 An upstream _source_ repository serves as the single source of truth for a collection of files.
-Changes to the content of _source_ are automatically applied to each of a series of downstream _target_ respositories.
+Changes to the content of the _source_ are automatically applied to each of a series of downstream _target_ respositories.
 This is by means of an automatic pull request that is opened in each.
 Can be chained across multiple steps as an arbitrary [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph).
 
