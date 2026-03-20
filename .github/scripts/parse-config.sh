@@ -33,9 +33,9 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
     # Add default and derived fields.
     map(
       ($ENV.GITHUB_REPOSITORY / "/") as [$owner, $name] |
-      ("https://github.com/" +  $ENV.GITHUB_REPOSITORY) as $url |
-      .source.owner = $source_owner |
-      .source.name = $source_name |
+      ("https://github.com/" + $ENV.GITHUB_REPOSITORY) as $url |
+      .source.owner = $owner |
+      .source.name = $name |
       .source.repository = $ENV.GITHUB_REPOSITORY |
       .source.commit = $ENV.GITHUB_SHA |
       .source.branch //= $ENV.DEFAULT_BRANCH |
@@ -45,18 +45,21 @@ CHILDREN=$(jq -c --rawfile default_pr_body .github/templates/pull-request-body.m
       .source.configUrl = $url + "/blob/" + $ENV.GITHUB_REF_NAME + "/" + $ENV.CONFIG_PATH |
       .source.branchUrl //= $url + "/blob/" + $ENV.DEFAULT_BRANCH
 
-    ) | map (
-      (.target.owner + "/" + .target.name)) as $repository |
+    ) |
+    map(
+      (.target.owner + "/" + .target.name) as $repository |
       ("https://github.com/" + $repository) as $url |
       .target.repository = $repository |
       .target.branch //= "" |
       .target.syncBranch //= "sync/" + .source.repository |
       .target.root //= "." |
       .target.url = $url
-    ) | map (
+    ) |
+    map(
       .pullRequest.title //= "[github-graph]: Synced files from %SOURCE_REPOSITORY." |
       .pullRequest.body //= $default_pr_body
-    ) | map (
+    ) |
+    map(
       .token //= "GH_TOKEN"
     ) |
 
