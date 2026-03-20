@@ -55,12 +55,12 @@ That being said, if you want to tackle these, I'd be a very greatful PR recipien
 ### Merge semantics
 
 Updated files are never "merged", but simply overwrite whatever exists downstream.
-This is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
+`github-graph` is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
 with the understanding that copies shouldn't be modified.
 
 ### Platform support
 
 This approach is heavily coupled with the GitHub ecosystem.
 We assume GitHub URL formats, the availability of GitHub Actions, with GitHub-provided environment variables.
-No support is offered for other platforms besides GitHub
-(I'm very sorry [GitLab](https://gitlab.com), [Bitbucket](https://bitbucket.org), etc.).
+No support is offered for other platforms
+(I'm very sorry to [GitLab](https://gitlab.com), [Bitbucket](https://bitbucket.org), etc.).
