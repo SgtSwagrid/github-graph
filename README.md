@@ -222,6 +222,11 @@ But the real reason is that many tools don't support indirection.
 You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
 Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
 
+### What's wrong with [multi-gitter](https://github.com/lindell/multi-gitter)?
+
+`multi-gitter` is a tool that allows you to perform an update on multiple repositories at once.
+This serves a different use case than having a unique source of truth for certain files.
+
 ## Limitations
 
 The following limitations apply.
