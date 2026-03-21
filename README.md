@@ -60,7 +60,7 @@ Once created, add it to your source repository's secrets under:
 
 By default, `github-graph` expects the token to be called `GH_TOKEN`.
 Don't worry if you need to use a different token for each target repository,
-that situation is covered in [configuration](#configuration).
+that situation is covered [here](#token).
 
 ## Architecture
 
@@ -140,7 +140,7 @@ The following sub-fields are available:
 A list of files to exclude from syncing, relative to `source.root`.
 Patterns can use [glob](https://en.wikipedia.org/wiki/Glob_(programming)) syntax,
 including `*`, `?`, and `[...]`, to match multiple files.
-Can be defined for a child, or globally at the top-level, with both lists being concatenated.
+Can be defined for a child or globally at the top-level, with both lists being concatenated.
 Defaults to `[]`, i.e. an empty list.
 
 ```json
