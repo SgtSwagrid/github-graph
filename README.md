@@ -45,7 +45,7 @@ Nevertheless, feel free to modify the above to suit your needs.
 
 Create the configuration file `.github/graph.json` in your source repository.
 This is where you can list all downstream targets that depend on this repository.
-See [configuration](https://github.com/SgtSwagrid/github-graph?tab=readme-ov-file#configuration) below for details.
+See [configuration](#configuration) below for details.
 
 ### 3. Create a Personal Access Token
 
@@ -54,10 +54,10 @@ you'll need a [Personal Access Token](https://docs.github.com/en/authentication/
 - Push to unprotected branches
 - Open pull requests
 
-Once created, add it to your source repository's secrets under **Settings → Secrets → Actions**.
+Once created, add it to your source repository's secrets under **Settings → Secrets and variables → Actions → New repository secret**.
 By default, `github-graph` expects the token to be called `GH_TOKEN`.
 Don't worry if you need to use a different token for each target repository,
-that situation is covered in [configuration](https://github.com/SgtSwagrid/github-graph?tab=readme-ov-file#configuration).
+that situation is covered in [configuration](#configuration).
 
 ## Architecture
 
@@ -73,49 +73,6 @@ in response to which pull requests are automatically opened.
 
 You needn't worry about circular dependencies creating a runaway robot takeover,
 as (a) the process stops if there are no changes, and (b) each propagation step still requires manual review.
-
-## Alternatives
-
-### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
-
-Git submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
-If this meets your use case, then great.
-However, a key limitation is that nested repositories have to be fully contained within isolated directories.
-In practice, and in fact for most of the example use cases listed, you'll instead want this content to be mixed in with everything else.
-
-### What's wrong with external references?
-
-Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
-why not just link to them and direct users or build tools straight to the source?
-The computer-sciency answer is that sometimes, especially for small things, inlines are more efficient despite the extra duplication.
-But the real reason is that many tools don't support indirection.
-You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
-Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
-
-## Limitations
-
-The following limitations apply.
-Relaxation of any of these is considered out-of-scope and won't be addressed.
-That being said, if you wanted to tackle these yourself, I'd be a very grateful PR recipient.
-
-### Merge semantics
-
-Updated files are never "merged", but simply overwrite whatever exists downstream.
-`github-graph` is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
-with the understanding that copies shouldn't be modified.
-
-### Platform support
-
-This approach is heavily coupled with the GitHub ecosystem.
-We assume GitHub URL formats, the availability of GitHub Actions, with GitHub-provided environment variables.
-No support is offered for other platforms
-(I'm very sorry to [GitLab](https://gitlab.com), [Bitbucket](https://bitbucket.org), etc.).
-
-### No pull-based syncing
-
-There is currently no option to sync in a pull-based manner,
-i.e. with the dependency registered in the target rather than in the source, and with periodic polling for updates.
-Unlike the other limitations, I will consider supporting this in the future.
 
 ## Configuration
 
@@ -219,3 +176,46 @@ Sync a shared CI configuration from a template repository into several projects,
   ]
 }
 ```
+
+## Alternatives
+
+### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
+
+Git submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
+If this meets your use case, then great.
+However, a key limitation is that nested repositories have to be fully contained within isolated directories.
+In practice, and in fact for most of the example [use cases](#use-cases) listed, you'll instead want this content to be mixed in with everything else.
+
+### What's wrong with external references?
+
+Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
+why not just link to them and direct users or build tools straight to the source?
+The computer-sciency answer is that sometimes, especially for small things, inlines are more efficient despite the extra duplication.
+But the real reason is that many tools don't support indirection.
+You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
+Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
+
+## Limitations
+
+The following limitations apply.
+Relaxation of any of these is considered out-of-scope and won't be addressed.
+That being said, if you wanted to tackle these yourself, I'd be a very grateful PR recipient.
+
+### Merge semantics
+
+Updated files are never "merged", but simply overwrite whatever exists downstream.
+`github-graph` is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
+with the understanding that copies shouldn't be modified.
+
+### Platform support
+
+This approach is heavily coupled with the GitHub ecosystem.
+We assume GitHub URL formats, the availability of GitHub Actions, with GitHub-provided environment variables.
+No support is offered for other platforms
+(I'm very sorry to [GitLab](https://gitlab.com), [Bitbucket](https://bitbucket.org), etc.).
+
+### No pull-based syncing
+
+There is currently no option to sync in a pull-based manner,
+i.e. with the dependency registered in the target rather than in the source, and with periodic polling for updates.
+Unlike the other limitations, I will consider supporting this in the future.
