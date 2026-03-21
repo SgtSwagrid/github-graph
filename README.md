@@ -84,8 +84,8 @@ When a target-specific setting conflicts with a global one, the target-specific 
 
 ### `children`
 
-Defined once at the top-level of the configuration.
 A list of target repositories to sync files into.
+Defined once at the top-level.
 
 ```json
 {
@@ -113,92 +113,96 @@ Everything else is optional.
 ### `target`
 
 Details about the downstream target repository to sync files into.
-Can be defined for a child, or at the top-level of the configuration.
-Has the following available sub-fields:
+Can be defined for a child, or globally at the top-level.
+The following sub-fields are available:
 
-| Field        | Description                                                | Default              |
-|--------------|------------------------------------------------------------|----------------------|
-| `owner`      | Owner of the target repository.                            | **Required**         |
-| `name`       | Name of the target repository.                             | **Required**         |
-| `branch`     | Branch to sync into.                                       | Repository default   |
-| `root`       | Directory within the target repository to copy files into. | `"."`                |
-| `syncBranch` | Staging branch used to open pull requests.                 | Auto-generated       |
-
-### `ignore`
-
-Glob patterns for files to exclude from syncing, relative to the source root. Patterns follow `*`, `**`, `?`, and `[...]` syntax. Top-level patterns are merged with any per-child patterns.
-
-```json
-{
-  "ignore": ["README.md", ".github/*", "docs/**"]
-}
-```
+| Field        | Description                                                | Default                                            |
+|--------------|------------------------------------------------------------|----------------------------------------------------|
+| `owner`      | Owner of the target repository.                            | **Required**                                       |
+| `name`       | Name of the target repository.                             | **Required**                                       |
+| `branch`     | Branch to sync into.                                       | Repository default (e.g. often `main` or `master`) |
+| `syncBranch` | Staging branch used to open pull requests.                 | Automatically generated                            |
+| `root`       | Directory within the target repository to copy files into. | Repository root (i.e. "`.`")                       |
 
 ### `source`
 
-| Field    | Description                                            | Default              |
-|----------|--------------------------------------------------------|----------------------|
-| `branch` | Branch to sync from.                                   | Repository default   |
-| `root`   | Directory within the source repository to copy from.   | `"."`                |
+Details about the upstream source repository to sync files from.
+Can be defined for a child, or globally at the top-level.
+The following sub-fields are available:
+
+| Field    | Description                                                | Default                                            |
+|----------|------------------------------------------------------------|----------------------------------------------------|
+| `branch` | Branch to sync from.                                       | Repository default (e.g. often `main` or `master`) |
+| `root`   | Directory within the source repository to copy files from. | Repository root (i.e. "`.`")                       |
+
+### `ignore`
+
+A list of files to exclude from syncing, relative to `source.root`.
+Patterns can use [glob](https://en.wikipedia.org/wiki/Glob_(programming)) syntax,
+including `*`, `?`, and `[...]`, to match multiple files.
+Can be defined for a child, or globally at the top-level, with both lists being concatenated.
+Defaults to `[]`, i.e. an empty list.
+
+```json
+{
+  "ignore": [
+    "README.md",
+    ".github/*"
+  ]
+}
+```
+
+Generally, you'll at least want to ignore the `github-graph` setup itself,
+i.e. `.github/workflows/sync.yml` and `.github/graph.json`,
+as these aren't excluded automatically.
+It is not necessary to ignore files which lie outside of `source.root`.
 
 ### `token`
 
-The name of the GitHub Actions secret containing the access token.
+The name of the GitHub Actions secret containing the access token for the target repository.
+Can be defined for a child, or globally at the top-level.
+Note that this is NOT for the token itself, just its name.
+If you accidentally commit a token to a public repository, you should deactivate that token immediately.
+Defaults to `GH_TOKEN`.
 
 ```json
-{ "token": "MY_CUSTOM_TOKEN" }
+{
+  "token": "MY_CUSTOM_TOKEN"
+}
 ```
 
 ### `pullRequest`
 
-| Field   | Description                          |
-|---------|--------------------------------------|
-| `title` | Template string for the PR title.    |
-| `body`  | Template string for the PR body.     |
+Cosmetic details for the pull requests that are automatically opened.
+Can be defined for a child, or globally at the top-level.
+The following sub-fields are available:
 
-The following variables are available in templates:
+| Field   | Description                       | Default                                         |
+|---------|-----------------------------------|-------------------------------------------------|
+| `title` | Template string for the PR title. | [github-graph]: Synced files from %SOURCE_NAME. |
+| `body`  | Template string for the PR body.  | See [here](templates/pull-request-body.md)      |
 
-| Variable             | Description                                      |
-|----------------------|--------------------------------------------------|
-| `$SOURCE_OWNER`      | Owner of the source repository.                  |
-| `$SOURCE_NAME`       | Name of the source repository.                   |
-| `$SOURCE_REPOSITORY` | Full name of the source repository (`owner/name`). |
-| `$SOURCE_URL`        | URL of the source repository.                    |
-| `$SOURCE_BRANCH`     | Branch being synced from.                        |
-| `$SOURCE_BRANCH_URL` | URL of the source branch.                        |
-| `$SOURCE_ROOT`       | Source root directory.                           |
-| `$SOURCE_COMMIT`     | SHA of the commit that triggered the sync.       |
-| `$SOURCE_COMMIT_URL` | URL of the triggering commit.                    |
-| `$SOURCE_CONFIG_URL` | URL of the `graph.json` config file.             |
-| `$TARGET_OWNER`      | Owner of the target repository.                  |
-| `$TARGET_NAME`       | Name of the target repository.                   |
-| `$TARGET_REPOSITORY` | Full name of the target repository (`owner/name`). |
-| `$TARGET_URL`        | URL of the target repository.                    |
-| `$TARGET_BRANCH`     | Branch being synced into.                        |
-| `$TARGET_ROOT`       | Target root directory.                           |
+The following variables are available in the templates,
+and can be substituted as strings by prepending `%` to their names:
 
-### Example
-
-Sync a shared CI configuration from a template repository into several projects, excluding per-project files:
-
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/SgtSwagrid/github-graph/main/graph.schema.json",
-  "ignore": ["README.md", "LICENSE.md", ".github/*"],
-  "source": {
-    "root": "template"
-  },
-  "children": [
-    {
-      "target": { "owner": "my-org", "name": "project-a" }
-    },
-    {
-      "target": { "owner": "my-org", "name": "project-b" },
-      "ignore": ["config/local.yml"]
-    }
-  ]
-}
-```
+| Variable            | Description                                        |
+|---------------------|----------------------------------------------------|
+| `SOURCE_OWNER`      | Owner of the source repository.                    |
+| `SOURCE_NAME`       | Name of the source repository.                     |
+| `SOURCE_REPOSITORY` | Full name of the source repository (`owner/name`). |
+| `SOURCE_BRANCH`     | Branch being synced from.                          |
+| `SOURCE_ROOT`       | Directory being synced from.                       |
+| `SOURCE_COMMIT`     | SHA of the commit that triggered the sync.         |
+| `SOURCE_URL`        | URL of the source repository.                      |
+| `SOURCE_BRANCH_URL` | URL of the source branch.                          |
+| `SOURCE_COMMIT_URL` | URL of the triggering commit.                      |
+| `SOURCE_CONFIG_URL` | URL of the `graph.json` config file.               |
+| `TARGET_OWNER`      | Owner of the target repository.                    |
+| `TARGET_NAME`       | Name of the target repository.                     |
+| `TARGET_REPOSITORY` | Full name of the target repository (`owner/name`). |
+| `TARGET_BRANCH`     | Branch being synced into.                          |
+| `TARGET_ROOT`       | Directory being synced into.                       |
+| `TARGET_URL`        | URL of the target repository.                      |
 
 ## Alternatives
 
