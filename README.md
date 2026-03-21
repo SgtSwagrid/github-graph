@@ -110,7 +110,7 @@ Each child corresonds to a single synchronisation task.
 For every child, the keys `target.owner` and `target.name` are mandatory.
 Everything else is optional.
 
-### target
+### `target`
 
 Details about the downstream target repository to sync files into.
 Can be defined for a child, or at the top-level of the configuration.
