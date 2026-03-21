@@ -79,20 +79,50 @@ as (a) the process stops if there are no changes, and (b) each propagation step 
 
 ## Configuration
 
-All fields except `target.owner` and `target.name` are optional. Fields set at the top level are inherited by all children but can be overridden per-child.
+All configuration is defined in `.github/graph.json`, and can be done _globally_ or _per-target_.
+When a target-specific setting conflicts with a global one, the target-specific setting takes precedence.
 
 ### `children`
 
+Defined once at the top-level of the configuration.
 A list of target repositories to sync files into.
 
 ```json
 {
   "children": [
-    { "target": { "owner": "my-org", "name": "repo-a" } },
-    { "target": { "owner": "my-org", "name": "repo-b" } }
+    {
+      "target": {
+        "owner": "my-org",
+        "name": "repo-a"
+      }
+    },
+    {
+      "target": {
+        "owner": "my-org",
+        "name": "repo-b"
+      }
+    }
   ]
 }
 ```
+
+Each child corresonds to a single synchronisation task.
+For every child, the keys `target.owner` and `target.name` are mandatory.
+Everything else is optional.
+
+### target
+
+Details about the downstream target repository to sync files into.
+Can be defined for a child, or at the top-level of the configuration.
+Has the following available sub-fields:
+
+| Field        | Description                                                | Default              |
+|--------------|------------------------------------------------------------|----------------------|
+| `owner`      | Owner of the target repository.                            | **Required**         |
+| `name`       | Name of the target repository.                             | **Required**         |
+| `branch`     | Branch to sync into.                                       | Repository default   |
+| `root`       | Directory within the target repository to copy files into. | `"."`                |
+| `syncBranch` | Staging branch used to open pull requests.                 | Auto-generated       |
 
 ### `ignore`
 
@@ -110,16 +140,6 @@ Glob patterns for files to exclude from syncing, relative to the source root. Pa
 |----------|--------------------------------------------------------|----------------------|
 | `branch` | Branch to sync from.                                   | Repository default   |
 | `root`   | Directory within the source repository to copy from.   | `"."`                |
-
-### `target`
-
-| Field        | Description                                                | Default              |
-|--------------|------------------------------------------------------------|----------------------|
-| `owner`      | Owner of the target repository. **Required.**              |                      |
-| `name`       | Name of the target repository. **Required.**               |                      |
-| `branch`     | Branch to sync into.                                       | Repository default   |
-| `root`       | Directory within the target repository to copy files into. | `"."`                |
-| `syncBranch` | Staging branch used to open pull requests.                 | Auto-generated       |
 
 ### `token`
 
@@ -184,7 +204,7 @@ Sync a shared CI configuration from a template repository into several projects,
 
 ### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
 
-Git submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
+Git Submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
 If this meets your use case, then great.
 However, a key limitation is that nested repositories have to be fully contained within isolated directories.
 In practice, and in fact for most of the example [use cases](#use-cases) listed, you'll instead want this content to be mixed in with everything else.
