@@ -33,7 +33,7 @@ on:
 
 jobs:
   sync:
-    uses: SgtSwagrid/github-graph/workflows/sync.yml@main
+    uses: SgtSwagrid/github-graph/.github/workflows/sync.yml@main
     secrets: inherit
 ```
 
