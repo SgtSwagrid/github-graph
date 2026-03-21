@@ -39,22 +39,25 @@ jobs:
 
 As written, this will trigger the synchronisation procedure when (any branch of) the source repository is pushed to.
 It doesn't matter now if you only want to sync from one branch (e.g. `main`), this is configured later.
-Nevertheless, feel free to modify the above to suit your needs.
+Nevertheless, feel free to modify the trigger to suit your needs.
 
 ### 2. Add a configuration file
 
 Create the configuration file `.github/graph.json` in your source repository.
-This is where you can list all downstream targets that depend on this repository.
+This is where you can enumerate all downstream targets that depend on this repository.
 See [configuration](#configuration) below for details.
 
 ### 3. Create a Personal Access Token
 
 In order for GitHub Actions to automatically create pull requests in the target repositories,
-you'll need a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) with appropriate permissions in each:
-- Push to unprotected branches
-- Open pull requests
+you'll need a [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) with at least the following permissions in each repository:
+- `Contents` with access `Read and write`.
+- `Pull requests` with access `Read and write`.
 
-Once created, add it to your source repository's secrets under **Settings → Secrets and variables → Actions → New repository secret**.
+You can manage your tokens [here](https://github.com/settings/personal-access-tokens).
+Once created, add it to your source repository's secrets under:
+> **Settings → Secrets and variables → Actions → New repository secret**
+
 By default, `github-graph` expects the token to be called `GH_TOKEN`.
 Don't worry if you need to use a different token for each target repository,
 that situation is covered in [configuration](#configuration).
