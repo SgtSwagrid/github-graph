@@ -17,7 +17,7 @@ But no longer! With `git-graph`, all of this and more can be defined once, and u
 ## Installation
 
 Installation is done for the _source_ repository,
-this being the repository that you want to sync files _from_.
+that being the repository that you want to sync files _from_.
 No separate installation is needed for the _target_ repositories.
 
 ### 1. Add the synchronisation workflow
