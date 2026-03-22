@@ -1,4 +1,4 @@
-# github-graph
+# 🕸️ github-graph
 
 A tool to duplicate files across multiple GitHub repositories.
 An upstream _source_ repository serves as the single source of truth for a collection of files.
@@ -6,7 +6,7 @@ Changes to the content of the _source_ are automatically applied to each of a se
 This is by means of an automatic pull request that is opened in each,
 and can be chained across multiple steps as an arbitrary [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph).
 
-## Use Cases
+## 💡 Use Cases
 
 The typical use case might involve an organisation with a canonical license, style rulebook, [linter](https://en.wikipedia.org/wiki/Lint_(software)) configuration, set of IDE plugin recommendations, contributer information, code of conduct, [gitignore](https://github.com/github/gitignore), etc.
 With multiple projects, this information is duplicated unnecessarily.
@@ -14,7 +14,7 @@ When updating something, one is forced to either go through the tedious process 
 or accept that things will get out of sync.
 But no longer! With `git-graph`, all of this and more can be defined once, and used everywhere.
 
-## Installation
+## ⬇️ Installation
 
 Installation is done for the _source_ repository,
 that being the repository that you want to sync files _from_.
@@ -62,7 +62,7 @@ By default, `github-graph` expects the token to be called `GH_TOKEN`.
 Don't worry if you need to use a different token for each target repository,
 that situation is covered [here](#token).
 
-## Architecture
+## 🏯 Architecture
 
 ### Push-based updates
 
@@ -77,7 +77,7 @@ in response to which pull requests are automatically opened.
 You needn't worry about circular dependencies creating a runaway robot takeover,
 as (a) the process stops if there are no changes, and (b) each propagation step still requires manual review.
 
-## Configuration
+## ⚙️ Configuration
 
 All configuration is defined in `.github/graph.json`, and can be done _globally_ or _per-target_.
 When a target-specific setting conflicts with a global one, the target-specific setting takes precedence.
@@ -204,7 +204,7 @@ and can be substituted as strings by prepending `%` to their names:
 | `TARGET_ROOT`       | Directory being synced into.                       |
 | `TARGET_URL`        | URL of the target repository.                      |
 
-## Alternatives
+## ⏪ Alternatives
 
 ### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
 
@@ -227,7 +227,7 @@ Additionally, the use of external references can violate the principle of [herme
 `multi-gitter` is a tool that allows you to perform an update on multiple repositories at once.
 This serves a different use case than having a unique source of truth for certain files.
 
-## Limitations
+## ❓ Limitations
 
 The following limitations apply.
 Relaxation of any of these is considered out-of-scope and won't be addressed.
