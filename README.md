@@ -12,7 +12,7 @@ The typical use case might involve an organisation with a canonical license, sty
 With multiple projects, this information is duplicated unnecessarily.
 When updating something, one is forced to either go through the tedious process of updating each project individually,
 or accept that things will get out of sync.
-But no longer! With `git-graph`, all of this and more can be defined once, and used everywhere.
+But no longer! With `github-graph`, all of this and more can be defined once, and used everywhere.
 
 ## ⬇️ Installation
 
