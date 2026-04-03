@@ -13,7 +13,6 @@ concurrency:
 jobs:
   # Build the list of target repositories from the config.
   init:
-    name: Initialise
     runs-on: ubuntu-latest
     outputs:
       children: ${{ steps.parse.outputs.children }}
@@ -36,7 +35,7 @@ jobs:
 
   # Synchronise each target repository.
   sync:
-    name: Sync → ${{ matrix.child.target.name }}
+    name: sync → ${{ matrix.child.target.name }}
     needs: init
     if: needs.init.outputs.children != '[]'
     runs-on: ubuntu-latest
