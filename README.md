@@ -1,20 +1,24 @@
-# github-graph
+<div align="center">
+  <h1>🕸️ GitHub Graph</h1>
+  <p>A tool to duplicate files across multiple GitHub repositories.</p>
+</div>
 
-A tool to duplicate files across multiple GitHub repositories.
+## 📌 Overview 
+
 An upstream _source_ repository serves as the single source of truth for a collection of files.
 Changes to the content of the _source_ are automatically applied to each of a series of downstream _target_ respositories.
 This is by means of an automatic pull request that is opened in each,
 and can be chained across multiple steps as an arbitrary [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph).
 
-## Use Cases
+## 💡 Use cases
 
 The typical use case might involve an organisation with a canonical license, style rulebook, [linter](https://en.wikipedia.org/wiki/Lint_(software)) configuration, set of IDE plugin recommendations, contributer information, code of conduct, [gitignore](https://github.com/github/gitignore), etc.
 With multiple projects, this information is duplicated unnecessarily.
 When updating something, one is forced to either go through the tedious process of updating each project individually,
 or accept that things will get out of sync.
-But no longer! With `git-graph`, all of this and more can be defined once, and used everywhere.
+But no longer! With _GitHub Graph_, all of this and more can be defined once, and used everywhere.
 
-## Installation
+## ⬇️ Installation
 
 Installation is done for the _source_ repository,
 that being the repository that you want to sync files _from_.
@@ -32,7 +36,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync:
+  run:
     uses: SgtSwagrid/github-graph/.github/workflows/sync.yml@main
     secrets: inherit
 ```
@@ -58,11 +62,11 @@ You can manage your tokens [here](https://github.com/settings/personal-access-to
 Once created, add it to your source repository's secrets under:
 > **Settings → Secrets and variables → Actions → New repository secret**
 
-By default, `github-graph` expects the token to be called `GH_TOKEN`.
+By default, _GitHub Graph_ expects the token to be called `GH_TOKEN`.
 Don't worry if you need to use a different token for each target repository,
 that situation is covered [here](#token).
 
-## Architecture
+## 🏯 Architecture
 
 ### Push-based updates
 
@@ -77,7 +81,7 @@ in response to which pull requests are automatically opened.
 You needn't worry about circular dependencies creating a runaway robot takeover,
 as (a) the process stops if there are no changes, and (b) each propagation step still requires manual review.
 
-## Configuration
+## ⚙️ Configuration
 
 All configuration is defined in `.github/graph.json`, and can be done _globally_ or _per-target_.
 When a target-specific setting conflicts with a global one, the target-specific setting takes precedence.
@@ -152,7 +156,7 @@ Defaults to `[]`, i.e. an empty list.
 }
 ```
 
-Generally, you'll at least want to ignore the `github-graph` setup itself,
+Generally, you'll at least want to ignore the _GitHub Graph_ setup itself,
 i.e. `.github/workflows/sync.yml` and `.github/graph.json`,
 as these aren't excluded automatically.
 It is not necessary to ignore files which lie outside of `source.root`.
@@ -204,7 +208,7 @@ and can be substituted as strings by prepending `%` to their names:
 | `TARGET_ROOT`       | Directory being synced into.                       |
 | `TARGET_URL`        | URL of the target repository.                      |
 
-## Alternatives
+## ⏪ Alternatives
 
 ### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
 
@@ -227,7 +231,7 @@ Additionally, the use of external references can violate the principle of [herme
 `multi-gitter` is a tool that allows you to perform an update on multiple repositories at once.
 This serves a different use case than having a unique source of truth for certain files.
 
-## Limitations
+## 🚩 Limitations
 
 The following limitations apply.
 Relaxation of any of these is considered out-of-scope and won't be addressed.
@@ -236,7 +240,7 @@ That being said, if you wanted to tackle these yourself, I'd be a very grateful 
 ### Merge semantics
 
 Updated files are never "merged", but simply overwrite whatever exists downstream.
-`github-graph` is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
+_GitHub Graph_ is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
 with the understanding that copies shouldn't be modified.
 
 ### Platform support
@@ -251,3 +255,7 @@ No support is offered for other platforms
 There is currently no option to sync in a pull-based manner,
 i.e. with the dependency registered in the target rather than in the source, and with periodic polling for updates.
 Unlike the other limitations, I will consider supporting this in the future.
+
+## 👁️ See also
+
+[GitHub Rules](https://github.com/SgtSwagrid/github-rules) is a tool to define GitHub rulesets in-source.
