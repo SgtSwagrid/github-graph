@@ -35,13 +35,6 @@ git config user.name  "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 git remote set-url origin "${TARGET_URL/https:\/\//https://x-access-token:${GH_TOKEN}@}.git"
 
-# =================================================================================================
-# 1. Merge the latest changes from the TARGET_BRANCH so that we don't get out-of-sync.
-#    Only relevant in cases where there are other outstanding updates that also aren't yet merged.
-# =================================================================================================
-
-git fetch origin "$TARGET_BRANCH"
-git checkout -B "$TARGET_SYNC_BRANCH" "origin/$TARGET_BRANCH"
 git add -A
 
 # =================================================================================================

@@ -72,6 +72,12 @@ jobs:
       - name: Load config
         run: bash .github-graph/scripts/load-config.sh '${{ toJson(matrix.child) }}'
 
+      - name: Reset PR branch
+        run: |
+          cd target
+          git fetch origin "$TARGET_BRANCH"
+          git checkout -B "$TARGET_SYNC_BRANCH" "origin/$TARGET_BRANCH"
+
       - name: Merge files
         run: bash .github-graph/scripts/merge-files.sh
 
