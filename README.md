@@ -36,7 +36,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync:
+  run:
     uses: SgtSwagrid/github-graph/.github/workflows/sync.yml@main
     secrets: inherit
 ```
