@@ -35,15 +35,36 @@ git config user.name  "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 git remote set-url origin "${TARGET_URL/https:\/\//https://x-access-token:${GH_TOKEN}@}.git"
 
+# =================================================================================================
+# 1. Reset the PR branch to the contents of TARGET_BRANCH, then stage the merged result.
+# =================================================================================================
+
+git fetch origin "$TARGET_BRANCH"
+git checkout -B "$TARGET_SYNC_BRANCH" "origin/$TARGET_BRANCH"
 git add -A
 
 # =================================================================================================
 # 2. If something has changed, commit and push the changes to TARGET_SYNC_BRANCH.
+#    Otherwise, push the reset branch and close any open PR.
 # =================================================================================================
 
 if git diff --cached --quiet; then
 
+  git push --force origin "$TARGET_SYNC_BRANCH"
   echo "No changes to commit for $TARGET_REPOSITORY."
+
+  # Close any open PR for this sync branch, since there is nothing left to merge.
+  pr_number=$(gh pr list \
+    --repo "$TARGET_REPOSITORY" \
+    --head "$TARGET_SYNC_BRANCH" \
+    --state open \
+    --json number \
+    --jq '.[0].number // empty')
+
+  if [[ -n "$pr_number" ]]; then
+    gh pr close "$pr_number" --repo "$TARGET_REPOSITORY"
+    echo "Closed pull request #$pr_number as there are no longer any changes to merge."
+  fi
 
 else
 
