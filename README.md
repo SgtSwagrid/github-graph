@@ -16,7 +16,7 @@ The typical use case might involve an organisation with a canonical license, sty
 With multiple projects, this information is duplicated unnecessarily.
 When updating something, one is forced to either go through the tedious process of updating each project individually,
 or accept that things will get out of sync.
-But no longer! With `github-graph`, all of this and more can be defined once, and used everywhere.
+But no longer! With _GitHub Graph_, all of this and more can be defined once, and used everywhere.
 
 ## ⬇️ Installation
 
@@ -62,7 +62,7 @@ You can manage your tokens [here](https://github.com/settings/personal-access-to
 Once created, add it to your source repository's secrets under:
 > **Settings → Secrets and variables → Actions → New repository secret**
 
-By default, `github-graph` expects the token to be called `GH_TOKEN`.
+By default, _GitHub Graph_ expects the token to be called `GH_TOKEN`.
 Don't worry if you need to use a different token for each target repository,
 that situation is covered [here](#token).
 
@@ -156,7 +156,7 @@ Defaults to `[]`, i.e. an empty list.
 }
 ```
 
-Generally, you'll at least want to ignore the `github-graph` setup itself,
+Generally, you'll at least want to ignore the _GitHub Graph_ setup itself,
 i.e. `.github/workflows/sync.yml` and `.github/graph.json`,
 as these aren't excluded automatically.
 It is not necessary to ignore files which lie outside of `source.root`.
@@ -240,7 +240,7 @@ That being said, if you wanted to tackle these yourself, I'd be a very grateful 
 ### Merge semantics
 
 Updated files are never "merged", but simply overwrite whatever exists downstream.
-`github-graph` is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
+_GitHub Graph_ is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
 with the understanding that copies shouldn't be modified.
 
 ### Platform support
