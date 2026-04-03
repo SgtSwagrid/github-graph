@@ -10,7 +10,7 @@ Changes to the content of the _source_ are automatically applied to each of a se
 This is by means of an automatic pull request that is opened in each,
 and can be chained across multiple steps as an arbitrary [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph).
 
-## 💡 Use Cases
+## 💡 Use cases
 
 The typical use case might involve an organisation with a canonical license, style rulebook, [linter](https://en.wikipedia.org/wiki/Lint_(software)) configuration, set of IDE plugin recommendations, contributer information, code of conduct, [gitignore](https://github.com/github/gitignore), etc.
 With multiple projects, this information is duplicated unnecessarily.
@@ -231,7 +231,7 @@ Additionally, the use of external references can violate the principle of [herme
 `multi-gitter` is a tool that allows you to perform an update on multiple repositories at once.
 This serves a different use case than having a unique source of truth for certain files.
 
-## ❓ Limitations
+## 🚩 Limitations
 
 The following limitations apply.
 Relaxation of any of these is considered out-of-scope and won't be addressed.
@@ -255,3 +255,7 @@ No support is offered for other platforms
 There is currently no option to sync in a pull-based manner,
 i.e. with the dependency registered in the target rather than in the source, and with periodic polling for updates.
 Unlike the other limitations, I will consider supporting this in the future.
+
+## 👁️ See also
+
+[GitHub Rules](https://github.com/SgtSwagrid/github-rules) is a tool to define GitHub rulesets in-source.
