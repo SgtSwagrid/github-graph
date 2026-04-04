@@ -56,8 +56,8 @@ CHILDREN=$(jq \
       ("https://github.com/" + $repository) as $url |
       .target.repository = $repository |
       .target.branch //= "" |
-      .target.syncBranch //= "sync#" + .source.repository + "_" + .source.branch + "_" + .source.root +
-        "->" + (.target.root // ".") + ";" |
+      .target.syncBranch //= "sync/" + .source.repository + "_" + .source.branch + "_" + .source.root +
+        "--" + (.target.root // ".") |
       .target.root //= "." |
       .target.url = $url
     ) |
