@@ -258,5 +258,5 @@ Unlike the other limitations, I will consider supporting this in the future.
 
 ## 👁️ See also
 
-* [GitHub Rules](https://github.com/SgtSwagrid/github-rules) is a tool to define GitHub rulesets in-source.
-* [Git Config](https://github.com/SgtSwagrid/git-config) and [Scala Config](https://github.com/SgtSwagrid/scala-config) are examples using _GitHub Graph_ to synchronise configuration.
+- See [Git Config](https://github.com/SgtSwagrid/git-config) and [Scala Config](https://github.com/SgtSwagrid/scala-config) for examples that use _GitHub Graph_ to synchronise configuration across projects.
+- See [GitHub Rules](https://github.com/SgtSwagrid/github-rules) for a similar tool to define GitHub [rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets) in-source.
