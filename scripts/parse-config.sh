@@ -62,7 +62,7 @@ CHILDREN=$(jq \
       .target.url = $url
     ) |
     map(
-      .pullRequest.title //= "[github-graph]: Synced files from `$SOURCE_NAME`." |
+      .pullRequest.title //= "[github-graph] Synced files from `$SOURCE_NAME`." |
       .pullRequest.body //= $default_pr_body
     ) |
     map(
