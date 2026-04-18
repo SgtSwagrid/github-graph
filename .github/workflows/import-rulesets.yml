@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - .github/rulesets/**
+      - .github/settings.json
   workflow_dispatch:
 
 jobs:
