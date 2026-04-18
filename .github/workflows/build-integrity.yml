@@ -16,6 +16,7 @@ jobs:
 
   # Verify code format and build integrity for every PR.
   build-integrity:
+    name: Build Integrity
     runs-on: ubuntu-latest
     permissions:
       contents: write
