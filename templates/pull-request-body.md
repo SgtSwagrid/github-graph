@@ -14,5 +14,5 @@ Please review carefully.
 
 ### Explanation
 
-[github-graph](https://github.com/SgtSwagrid/github-graph) is a tool for duplicating files across repositories.
+[GitHub Graoh](https://github.com/SgtSwagrid/github-graph) is a tool for duplicating files across repositories.
 The responsible configuration can be found [here]($SOURCE_CONFIG_URL).
