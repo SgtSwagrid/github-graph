@@ -1,0 +1,17 @@
+{
+  "allow_squash_merge": true,
+  "allow_merge_commit": false,
+  "allow_rebase_merge": false,
+  "allow_auto_merge": false,
+  "allow_update_branch": true,
+  "delete_branch_on_merge": true,
+  "web_commit_signoff_required": false,
+  "squash_merge_commit_title": "PR_TITLE",
+  "squash_merge_commit_message": "PR_BODY",
+  "merge_commit_title": "PR_TITLE",
+  "merge_commit_message": "PR_BODY",
+  "actions_enabled": true,
+  "actions_allowed": "all",
+  "actions_default_workflow_permissions": "write",
+  "actions_can_approve_pull_request_reviews": true
+}
