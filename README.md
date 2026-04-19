@@ -3,7 +3,13 @@
   <p>A tool to duplicate files across multiple GitHub repositories.</p>
 </div>
 
-## 📌 Overview 
+## 📌 Overview
+
+<br/>
+
+> "Civilisation advances by extending the number of important operations which we can perform without thinking about them." — Alfred North Whitehead.
+
+<br/>
 
 An upstream _source_ repository serves as the single source of truth for a collection of files.
 Changes to the content of the _source_ are automatically applied to each of a series of downstream _target_ respositories.
