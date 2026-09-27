@@ -167,6 +167,29 @@ i.e. `.github/workflows/sync.yml` and `.github/graph.json`,
 as these aren't excluded automatically.
 It is not necessary to ignore files which lie outside of `source.root`.
 
+### `syncDeletions`
+
+Whether files which are deleted from the source should also be deleted from the target.
+Can be defined for a child, or globally at the top-level.
+Defaults to `true`.
+
+```json
+{
+  "syncDeletions": false
+}
+```
+
+As the target may have files of its own which happen to share a name with one deleted from the source,
+a file is only deleted if the history of both repositories shows that it's a copy of the one which was deleted.
+In particular, a file is kept if:
+- **It didn't originate from the source.** For example, the target had its own version of the file, which was later overwritten by the source.
+- **It was re-added after the deletion.** For example, the deletion was synced, but the target later restored the file or created a new one with the same name.
+- **It was modified in the target.** That is, it doesn't match any version which the source ever had.
+
+Any file which is kept for one of these reasons is reported in the workflow logs.
+A renamed file is treated as a deletion of the old name, plus an addition of the new one.
+Files in the `ignore` list are never deleted.
+
 ### `token`
 
 The name of the GitHub Actions secret containing the access token for the target repository.
@@ -246,6 +269,7 @@ That being said, if you wanted to tackle these yourself, I'd be a very grateful 
 ### Merge semantics
 
 Updated files are never "merged", but simply overwrite whatever exists downstream.
+Likewise, deleted files are deleted downstream, unless they've since been modified or re-added there (see [`syncDeletions`](#syncdeletions)).
 _GitHub Graph_ is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
 with the understanding that copies shouldn't be modified.
 

@@ -68,6 +68,10 @@ CHILDREN=$(jq \
     map(
       .token //= "GH_TOKEN"
     ) |
+    # Note that `//=` would also replace an explicit `false`.
+    map(
+      .syncDeletions |= (if . == null then true else . end)
+    ) |
 
     # Filter to only children that are triggered by the current branch.
     map(select(.source.branch == $ENV.GITHUB_REF_NAME))

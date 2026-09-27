@@ -9,7 +9,8 @@ Note however that subsequent commits to [$SOURCE_BRANCH]($SOURCE_BRANCH_URL) may
 
 ### Warning
 
-This change is potentially destructive, as files with matching names will be overwritten.
+This change is potentially destructive, as files with matching names will be overwritten,
+and files which were deleted upstream will also be deleted here.
 Please review carefully.
 
 ### Explanation
