@@ -8,10 +8,11 @@ set -euo pipefail
 #   - IGNORE: A JSON-formatted list of file paths to exclude from syncing.
 #   - SOURCE_ROOT: The root directory within the source repository to copy files from.
 #   - TARGET_ROOT: The root directory within the target repository to copy files into.
+#   - SYNC_DELETIONS: Whether to delete files from the target which were deleted from the source.
 #
 # Requirements:
-#   - source/ should already contain the source repository at the correct branch.
-#   - target/ should already contain the target repository at the correct branch.
+#   - source/ should already contain the source repository at the correct branch, with full history.
+#   - target/ should already contain the target repository at the correct branch, with full history.
 # =================================================================================================
 
 
@@ -43,6 +44,33 @@ target_path() {
   echo "target/$TARGET_ROOT/${1#"$prefix"}"
 }
 
+# Convert a file name that is relative to SOURCE_ROOT to a normalised path relative to the target repository.
+target_relative_path() {
+  realpath -ms --relative-to=target "$(target_path "$1")"
+}
+
+# Output the first-parent history of a branch, as NUL-separated records of the form:
+#   <commit time> <blob> <status> <file>
+# There is one record for each file changed by each commit, with renames treated as a deletion plus an addition.
+# Following only the first parent means that each change is dated by when it actually landed on the branch.
+#   - $1: The repository directory.
+#   - $@: Any further arguments are passed to `git log`.
+file_history() {
+  local repo="$1" token timestamp="" blob status file
+  shift
+  while IFS= read -r -d '' token; do
+    if [[ "$token" =~ ^[[:space:]]*:(.*)$ ]]; then
+      read -r _ _ _ blob status <<< "${BASH_REMATCH[1]}"
+      IFS= read -r -d '' file
+      printf '%s\0' "$timestamp" "$blob" "$status" "$file"
+    elif [[ "$token" =~ ^[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
+      timestamp="${BASH_REMATCH[1]}"
+    fi
+  done < <(
+    git -C "$repo" log --first-parent --diff-merges=first-parent --no-renames --raw --no-abbrev -z --format='%ct' "$@"
+  )
+}
+
 # =================================================================================================
 # 1. Copy all files in the SOURCE_ROOT directory of the source repository
 #    to the TARGET_ROOT directory of the target repository.
@@ -70,31 +98,72 @@ for file in "${!SOURCE_FILES[@]}"; do
 done
 
 # =================================================================================================
-# 2. Delete from the target repository all files which once existed in the source repository,
+# 2. Delete from the target repository all files which were synced from the source repository,
 #    but which have since been deleted from the source repository.
 #    Files in the ignore list or outside of SOURCE_ROOT are skipped.
+#    As the target may have files of its own with the same names, a file is only deleted if:
+#      a) It originated from the source.
+#         i.e. When it was last added to the target, it matched a version which the source once had.
+#      b) It hasn't been re-added to the target since being deleted from the source.
+#         i.e. It was last added to the target before it was deleted from the source.
+#      c) It hasn't been modified in the target.
+#         i.e. It currently matches a version which the source once had.
 # =================================================================================================
 
-# A list of names of all files which have been deleted from the source repository.
-mapfile -t SOURCE_DELETED < <(
-  git -C source log --diff-filter=D --name-only --pretty=format: | sort -u
-)
+if [[ "$SYNC_DELETIONS" != "true" ]]; then
+  echo "Skipped deletions, as syncDeletions is disabled."
+  exit 0
+fi
 
-for file in "${SOURCE_DELETED[@]}"; do
-  # Ignore because file name is empty.
-  if [[ -z "$file" ]]; then :
-  # Ignore because file is outside SOURCE_ROOT.
-  elif [[ "$SOURCE_ROOT" != "." && "$file" != "$SOURCE_ROOT"/* ]]; then :
-  # Ignore because file is in ignore list.
-  elif is_ignored "${file#"$SOURCE_ROOT/"}"; then :
-  # Ignore because file was re-added.
-  elif [[ -n "${SOURCE_FILES[$file]+_}" ]]; then :
-  # Delete the file if none of the exclusions apply.
+# Provenance can't be determined without the full history of both repositories.
+if [[ "$(git -C source rev-parse --is-shallow-repository)" == "true" ||
+      "$(git -C target rev-parse --is-shallow-repository)" == "true" ]]; then
+  echo "::warning::Skipped deletions, as they require the full history of both repositories."
+  exit 0
+fi
+
+# For every file in SOURCE_ROOT which was ever in the source repository:
+#   - DELETED_AT: The time at which it was deleted from the source, or empty if it still exists.
+#   - SOURCE_VERSIONS: The set of versions it has had in the source, keyed by "<blob>:<file>".
+declare -A DELETED_AT SOURCE_VERSIONS
+while IFS= read -r -d '' timestamp && IFS= read -r -d '' blob && IFS= read -r -d '' status && IFS= read -r -d '' file; do
+  if [[ "$status" == "D" ]]; then
+    DELETED_AT["$file"]="$timestamp"
   else
-    dest=$(target_path "$file")
-    if [[ -e "$dest" ]]; then
-      rm "$dest"
-      echo "Deleted: $file"
+    DELETED_AT["$file"]=""
+    SOURCE_VERSIONS["$blob:$file"]=1
+  fi
+done < <(file_history source --reverse -- "$SOURCE_ROOT")
+
+for file in "${!DELETED_AT[@]}"; do
+  deleted_at="${DELETED_AT[$file]}"
+
+  # Ignore because file still exists in the source.
+  if [[ -z "$deleted_at" ]]; then continue; fi
+  # Ignore because file is in ignore list.
+  if is_ignored "${file#"$SOURCE_ROOT/"}"; then continue; fi
+
+  # Ignore because file doesn't exist in the target.
+  dest=$(target_relative_path "$file")
+  current=$(git -C target rev-parse -q --verify "HEAD:$dest") || continue
+
+  # Find when the file was last added to the target, and with which version.
+  added_at="" added_blob=""
+  while IFS= read -r -d '' timestamp && IFS= read -r -d '' blob && IFS= read -r -d '' status && IFS= read -r -d '' path; do
+    if [[ "$path" == "$dest" ]]; then
+      added_at="$timestamp" added_blob="$blob"
+      break
     fi
+  done < <(file_history target --diff-filter=A -- ":(literal)$dest")
+
+  if [[ -z "$added_at" || -z "${SOURCE_VERSIONS["$added_blob:$file"]+_}" ]]; then
+    echo "Kept: $file (didn't originate from the source)"
+  elif (( added_at >= deleted_at )); then
+    echo "Kept: $file (re-added after being deleted from the source)"
+  elif [[ -z "${SOURCE_VERSIONS["$current:$file"]+_}" ]]; then
+    echo "Kept: $file (modified after being synced from the source)"
+  else
+    rm "target/$dest"
+    echo "Deleted: $file"
   fi
 done

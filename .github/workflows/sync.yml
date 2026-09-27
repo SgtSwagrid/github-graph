@@ -54,11 +54,13 @@ jobs:
           repository: SgtSwagrid/github-graph
           path: .github-graph
 
+      # Full history of both repositories is needed to sync deletions.
       - name: Checkout source
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.child.source.branch }}
           path: source
+          fetch-depth: 0
 
       - name: Checkout target
         uses: actions/checkout@v4
@@ -67,6 +69,7 @@ jobs:
           ref: ${{ matrix.child.target.branch }}
           token: ${{ secrets[matrix.child.token] }}
           path: target
+          fetch-depth: 0
 
       - name: Load config
         run: bash .github-graph/scripts/load-config.sh '${{ toJson(matrix.child) }}'
