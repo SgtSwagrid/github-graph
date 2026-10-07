@@ -243,7 +243,7 @@ and can be substituted as strings by prepending `%` to their names:
 ### What's wrong with Git [Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)?
 
 Git Submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
-If this meets your use case, then great.
+If this meets your use case, then use Submodules instead.
 However, a key limitation is that nested repositories have to be fully contained within isolated directories.
 In practice, and in fact for most of the example [use cases](#use-cases) listed, you'll instead want this content to be mixed in with everything else.
 
@@ -251,7 +251,7 @@ In practice, and in fact for most of the example [use cases](#use-cases) listed,
 
 Instead of [inlining](https://en.wikipedia.org/wiki/Inline_expansion) the concerned files straight into each repository,
 why not just link to them and direct users or build tools straight to the source?
-The computer-sciency answer is that sometimes, especially for small things, inlines are more efficient despite the extra duplication.
+The computer-sciency answer is that sometimes, [especially for small things](https://en.wikipedia.org/wiki/Inline_expansion#Effect_on_performance), inlines are more efficient despite the extra duplication.
 But the real reason is that many tools don't support indirection.
 You can't tell GitHub "I don't have a `.gitignore`, but look over there at that other project, I'd like to use theirs".
 Additionally, the use of external references can violate the principle of [hermeticity](https://bazel.build/basics/hermeticity).
