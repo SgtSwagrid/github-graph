@@ -76,7 +76,7 @@ that situation is covered [here](#token).
 
 ### Push-based updates
 
-Follows a push-based model.
+_GitHub Graph_ follows a push-based model.
 This is true both in the [git](https://git-scm.com/docs/git-push) sense and in the [reactive programming](https://www.baeldung.com/cs/reactive-programming) sense.
 Changes _pushed_ to the source are _eagerly_ propagated (i.e. _pushed_) downstream.
 A [GitHub Actions](https://github.com/features/actions) workflow in the source repository listens for pushes to a designated branch and directory,
@@ -86,6 +86,7 @@ in response to which pull requests are automatically opened.
 
 You needn't worry about circular dependencies creating a runaway robot takeover,
 as (a) the process stops if there are no changes, and (b) each propagation step still requires manual review.
+Although, if you are a heavy user of agentic workflows, (b) is readily circumventable.
 
 ## ⚙️ Configuration
 
@@ -263,8 +264,8 @@ This serves a different use case than having a unique source of truth for certai
 ## 🚩 Limitations
 
 The following limitations apply.
-Relaxation of any of these is considered out-of-scope and won't be addressed.
-That being said, if you wanted to tackle these yourself, I'd be a very grateful PR recipient.
+Relaxation of any of the following is considered out-of-scope and likely won't be addressed.
+That being said, if you wanted to tackle these yourself, I'd be a grateful PR recipient.
 
 ### Merge semantics
 
@@ -284,7 +285,6 @@ No support is offered for other platforms
 
 There is currently no option to sync in a pull-based manner,
 i.e. with the dependency registered in the target rather than in the source, and with periodic polling for updates.
-Unlike the other limitations, I will consider supporting this in the future.
 
 ## 👁️ See also
 
