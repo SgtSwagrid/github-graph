@@ -82,6 +82,30 @@ Changes _pushed_ to the source are _eagerly_ propagated (i.e. _pushed_) downstre
 A [GitHub Actions](https://github.com/features/actions) workflow in the source repository listens for pushes to a designated branch and directory,
 in response to which pull requests are automatically opened.
 
+### One pull request per target
+
+Each branch of a target repository has a single sync branch, and so at most one open pull request,
+which every source that syncs into it shares.
+This holds whether the changes come from several source repositories,
+or from one source into several directories of the target.
+
+The sync branch holds one commit for each source directory with changes, on top of the target branch.
+Each sync rebuilds it on the latest target branch,
+reapplying the commits from every other source directory, and replacing its own with its latest changes
+(or dropping it, if there are none).
+As with [`syncDeletions`](#syncdeletions), a deletion isn't reapplied if the file has since been modified in the target branch.
+Anything else pushed to the sync branch is discarded.
+If several syncs update the branch at once, only one can push at a time,
+and the others rebuild the branch with its changes and try again.
+
+If no changes remain at all, the pull request is closed.
+Once it has been merged or closed, the next sync starts a new branch and pull request from the target branch.
+
+Earlier versions of _GitHub Graph_ opened a separate pull request for each source directory,
+from a branch named like `sync/<owner>/<repository>_<branch>_<root>--<root>;`.
+If one of these is still open, the next sync from that source closes it and deletes its branch,
+as its changes are then in the shared pull request.
+
 ### Circular dependencies
 
 You needn't worry about circular dependencies creating a runaway robot takeover,
@@ -132,8 +156,12 @@ The following sub-fields are available:
 | `owner`      | Owner of the target repository.                            | **Required**                                       |
 | `name`       | Name of the target repository.                             | **Required**                                       |
 | `branch`     | Branch to sync into.                                       | Repository default (e.g. often `main` or `master`) |
-| `syncBranch` | Staging branch used to open pull requests.                 | Automatically generated                            |
+| `syncBranch` | Staging branch used to open pull requests.                 | `sync/github-graph/<branch>`                       |
 | `root`       | Directory within the target repository to copy files into. | Repository root (i.e. "`.`")                       |
+
+Every source which syncs into the same `branch` with the same `syncBranch` shares one pull request
+(see [one pull request per target](#one-pull-request-per-target)),
+so if you override `syncBranch`, do so alike in every source that syncs into the target.
 
 ### `source`
 
@@ -211,13 +239,13 @@ Cosmetic details for the pull requests that are automatically opened.
 Can be defined for a child, or globally at the top-level.
 The following sub-fields are available:
 
-| Field   | Description                       | Default                                         |
-|---------|-----------------------------------|-------------------------------------------------|
-| `title` | Template string for the PR title. | [github-graph]: Synced files from %SOURCE_NAME. |
-| `body`  | Template string for the PR body.  | See [here](templates/pull-request-body.md)      |
+| Field   | Description                       | Default                                                  |
+|---------|-----------------------------------|----------------------------------------------------------|
+| `title` | Template string for the PR title. | `` [github-graph] Synced files from `$SOURCE_NAME`. ``   |
+| `body`  | Template string for the PR body.  | See [here](templates/pull-request-body.md)               |
 
 The following variables are available in the templates,
-and can be substituted as strings by prepending `%` to their names:
+and can be substituted as strings by prepending `$` to their names:
 
 | Variable            | Description                                        |
 |---------------------|----------------------------------------------------|
@@ -237,6 +265,14 @@ and can be substituted as strings by prepending `%` to their names:
 | `TARGET_BRANCH`     | Branch being synced into.                          |
 | `TARGET_ROOT`       | Directory being synced into.                       |
 | `TARGET_URL`        | URL of the target repository.                      |
+
+As one pull request can hold the changes from [several sources](#one-pull-request-per-target),
+each source's title and body are kept with its commit on the sync branch, and the pull request is built from all of them
+(so any edits made to them by hand are overwritten by the next sync).
+Its body has the body from each source, separated by horizontal rules, with identical bodies shown once.
+Its title is the sources' title if they all agree, and otherwise `[github-graph] Synced files from several repositories.`.
+Commits identify their source directory by an opaque key rather than by name,
+so a private source is only named downstream if its own title or body names it.
 
 ## ⏪ Alternatives
 
@@ -273,6 +309,7 @@ Updated files are never "merged", but simply overwrite whatever exists downstrea
 Likewise, deleted files are deleted downstream, unless they've since been modified or re-added there (see [`syncDeletions`](#syncdeletions)).
 _GitHub Graph_ is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
 with the understanding that copies shouldn't be modified.
+If several sources nonetheless sync the same file into one target, whichever synced most recently wins.
 
 ### Platform support
 

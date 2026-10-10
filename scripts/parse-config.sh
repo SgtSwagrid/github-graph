@@ -56,8 +56,12 @@ CHILDREN=$(jq \
       ("https://github.com/" + $repository) as $url |
       .target.repository = $repository |
       .target.branch //= "" |
-      .target.syncBranch //= "sync/" + .source.repository + "_" + .source.branch + "_" + .source.root +
-        "--" + (.target.root // ".") + ";" |
+      # Older versions staged each source directory on a sync branch of its own.
+      .target.legacySyncBranch = (if (.target.syncBranch // "") != "" then "" else
+        "sync/" + .source.repository + "_" + .source.branch + "_" + .source.root +
+        "--" + (.target.root // ".") + ";" end) |
+      # The default is shared by every source, but depends on the target branch, so is resolved later.
+      .target.syncBranch //= "" |
       .target.root //= "." |
       .target.url = $url
     ) |
