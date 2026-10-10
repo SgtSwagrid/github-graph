@@ -26,7 +26,7 @@ jq -r '
   "TARGET_NAME=\(.target.name)",
   "TARGET_REPOSITORY=\(.target.repository)",
   "TARGET_BRANCH=\(.target.branch)",
-  "TARGET_SYNC_BRANCH=\(.target.syncBranch)",
+  "TARGET_LEGACY_SYNC_BRANCH=\(.target.legacySyncBranch)",
   "TARGET_ROOT=\(.target.root)",
   "TARGET_URL=\(.target.url)",
   "IGNORE=\(.ignore | tojson)",
@@ -37,7 +37,12 @@ jq -r '
 # TARGET_BRANCH requires a runtime fallback to the target repository's default branch.
 TARGET_BRANCH=$(jq -r '.target.branch' <<< "$CHILD")
 DEFAULT_BRANCH=$(git -C target ls-remote --symref origin HEAD | sed -n 's|^ref: refs/heads/\(.*\)\tHEAD|\1|p')
-echo "TARGET_BRANCH=${TARGET_BRANCH:-$DEFAULT_BRANCH}" >> "$GITHUB_ENV"
+TARGET_BRANCH="${TARGET_BRANCH:-$DEFAULT_BRANCH}"
+echo "TARGET_BRANCH=$TARGET_BRANCH" >> "$GITHUB_ENV"
+
+# TARGET_SYNC_BRANCH defaults to one per target branch, shared by every source which syncs into it.
+TARGET_SYNC_BRANCH=$(jq -r '.target.syncBranch' <<< "$CHILD")
+echo "TARGET_SYNC_BRANCH=${TARGET_SYNC_BRANCH:-sync/github-graph/$TARGET_BRANCH}" >> "$GITHUB_ENV"
 
 # PR_BODY may contain newlines, so it requires the GitHub Actions multiline format.
 PR_BODY=$(jq -r '.pullRequest.body' <<< "$CHILD")

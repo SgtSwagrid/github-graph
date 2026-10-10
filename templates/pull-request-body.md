@@ -4,8 +4,8 @@ Applied automatic synchronisation of updated files from [**$SOURCE_REPOSITORY**]
 
 ### Trigger
 
-This pull request was initially triggered by [$SOURCE_COMMIT]($SOURCE_COMMIT_URL).
-Note however that subsequent commits to [$SOURCE_BRANCH]($SOURCE_BRANCH_URL) may also be incorporated.
+These changes were last synced from [$SOURCE_COMMIT]($SOURCE_COMMIT_URL).
+Subsequent commits to [$SOURCE_BRANCH]($SOURCE_BRANCH_URL) will also be incorporated while this pull request is open.
 
 ### Warning
 
