@@ -209,11 +209,15 @@ Defaults to `true`.
 ```
 
 As the target may have files of its own which happen to share a name with one deleted from the source,
-a file is only deleted if the history of both repositories shows that it's a copy of the one which was deleted.
+a file is only deleted if the history of both repositories shows that its last change in the target came from the source:
+that it's still a version which the source once had, and was last changed before the source deleted it.
 In particular, a file is kept if:
-- **It didn't originate from the source.** For example, the target had its own version of the file, which was later overwritten by the source.
-- **It was re-added after the deletion.** For example, the deletion was synced, but the target later restored the file or created a new one with the same name.
 - **It was modified in the target.** That is, it doesn't match any version which the source ever had.
+- **It was changed or re-added after the deletion.** For example, the deletion was synced, but the target later restored the file or created a new one with the same name.
+
+Only the file's last change counts, not how it first arrived.
+So a file which the target had first, but which the source then overwrote, is the source's from then on.
+Likewise for one which another source first added, before the current one took it over, as when a repository is moved beneath a new parent.
 
 Any file which is kept for one of these reasons is reported in the workflow logs.
 A renamed file is treated as a deletion of the old name, plus an addition of the new one.
