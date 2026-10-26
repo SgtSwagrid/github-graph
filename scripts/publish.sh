@@ -119,28 +119,29 @@ key_of() {
   git log -1 --format="%(trailers:key=$TRAILER,valueonly)" "$1" | sed -n 1p
 }
 
+# The state of a file which doesn't exist: the blob which git gives a deleted file, all zeros.
+ABSENT=$(git hash-object --stdin < /dev/null | tr '0-9a-f' '0')
+
 # Apply the changes made by a commit on top of another, as whole files, and output the new commit,
 # or nothing if there are no changes left to make.
-# As in `merge-files.sh`, a deletion is skipped if the file has been modified since.
+# As in `merge-files.sh`, a file which the target has changed itself is left alone:
+# each change, whether it adds, updates or deletes a file, is only applied where the file is still
+# as it was when the change was made.
 #   - $1: The commit to apply the changes on top of.
 #   - $2: The commit which made the changes.
 replay() {
-  local onto="$1" commit="$2" index tree meta path new_mode old_blob new_blob status current
+  local onto="$1" commit="$2" index tree meta path new_mode old_blob new_blob current
   index="$(git rev-parse --git-dir)/github-graph-index"
   rm -f "$index"
   GIT_INDEX_FILE="$index" git read-tree "$onto"
   while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
-    read -r _ new_mode old_blob new_blob status <<< "$meta"
-    if [[ "$status" != "D" ]]; then
-      printf '%s %s\t%s\0' "$new_mode" "$new_blob" "$path"
-      continue
-    fi
-    current=$(git rev-parse -q --verify "$onto:$path") || continue
+    read -r _ new_mode old_blob new_blob _ <<< "$meta"
+    current=$(git rev-parse -q --verify "$onto:$path") || current="$ABSENT"
     if [[ "$current" == "$old_blob" ]]; then
-      # Mode 0 removes the file.
-      printf '0 %s\t%s\0' "$old_blob" "$path"
-    else
-      echo "Kept: $path (modified in $TARGET_BRANCH since its deletion was synced)" >&2
+      # A deleted file has mode 0, which removes it.
+      printf '%s %s\t%s\0' "$new_mode" "$new_blob" "$path"
+    elif [[ "$current" != "$new_blob" ]]; then
+      echo "Kept: $path (changed in $TARGET_BRANCH since it was synced)" >&2
     fi
   done < <(git diff-tree -r -z --no-renames "$commit^" "$commit") |
     GIT_INDEX_FILE="$index" git update-index -z --index-info

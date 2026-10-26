@@ -9,8 +9,8 @@ Subsequent commits to [$SOURCE_BRANCH]($SOURCE_BRANCH_URL) will also be incorpor
 
 ### Warning
 
-This change is potentially destructive, as files with matching names will be overwritten,
-and files which were deleted upstream will also be deleted here.
+This changes, adds and deletes files here as they were changed, added and deleted upstream,
+leaving alone any file which was changed here since it was last synced.
 Please review carefully.
 
 ### Explanation

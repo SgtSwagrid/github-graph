@@ -82,6 +82,29 @@ Changes _pushed_ to the source are _eagerly_ propagated (i.e. _pushed_) downstre
 A [GitHub Actions](https://github.com/features/actions) workflow in the source repository listens for pushes to a designated branch and directory,
 in response to which pull requests are automatically opened.
 
+### Which files are synced
+
+Every file which the source has ever had (outside the [`ignore`](#ignore) list) is given the state it now has in the source:
+its latest version, or none if the source has deleted it.
+But a target may change a synced file itself, or have a file of its own with the same name,
+so the source's state is only given to a file whose last change in the target came from the source.
+That is, the history of both repositories shows that:
+- **its state in the target is one which the source had before the target last changed it**,
+  where a file's absence counts as one of the source's states once the source has deleted it, and
+- **the source has changed it since**.
+
+A file which the target never had is simply added.
+So a file which the target has modified, deleted, or re-added after its deletion was synced is left alone from then on,
+as is one which the target had of its own before the source added it.
+Each is reported in the workflow logs as `Kept`.
+To have a file follow the source again, give it the source's latest version (or delete it, if the source has deleted it),
+and the source's next change to it is synced as usual.
+
+Only a file's last change counts, not how it first arrived:
+a file which the source overwrote, or which another source first added before this one took it over (as when a repository is moved beneath a new parent),
+is the source's as long as its version is one which the source had.
+A renamed file is treated as a deletion of the old name, plus an addition of the new one.
+
 ### One pull request per target
 
 Each branch of a target repository has a single sync branch, and so at most one open pull request,
@@ -93,7 +116,7 @@ The sync branch holds one commit for each source directory with changes, on top 
 Each sync rebuilds it on the latest target branch,
 reapplying the commits from every other source directory, and replacing its own with its latest changes
 (or dropping it, if there are none).
-As with [`syncDeletions`](#syncdeletions), a deletion isn't reapplied if the file has since been modified in the target branch.
+As in [which files are synced](#which-files-are-synced), a change isn't reapplied to a file which the target branch has changed itself since the change was made.
 Anything else pushed to the sync branch is discarded.
 If several syncs update the branch at once, only one can push at a time,
 and the others rebuild the branch with its changes and try again.
@@ -195,33 +218,7 @@ Generally, you'll at least want to ignore the _GitHub Graph_ setup itself,
 i.e. `.github/workflows/sync.yml` and `.github/graph.json`,
 as these aren't excluded automatically.
 It is not necessary to ignore files which lie outside of `source.root`.
-
-### `syncDeletions`
-
-Whether files which are deleted from the source should also be deleted from the target.
-Can be defined for a child, or globally at the top-level.
-Defaults to `true`.
-
-```json
-{
-  "syncDeletions": false
-}
-```
-
-As the target may have files of its own which happen to share a name with one deleted from the source,
-a file is only deleted if the history of both repositories shows that its last change in the target came from the source:
-that it's still a version which the source once had, and was last changed before the source deleted it.
-In particular, a file is kept if:
-- **It was modified in the target.** That is, it doesn't match any version which the source ever had.
-- **It was changed or re-added after the deletion.** For example, the deletion was synced, but the target later restored the file or created a new one with the same name.
-
-Only the file's last change counts, not how it first arrived.
-So a file which the target had first, but which the source then overwrote, is the source's from then on.
-Likewise for one which another source first added, before the current one took it over, as when a repository is moved beneath a new parent.
-
-Any file which is kept for one of these reasons is reported in the workflow logs.
-A renamed file is treated as a deletion of the old name, plus an addition of the new one.
-Files in the `ignore` list are never deleted.
+Files in the `ignore` list are never added, updated or deleted.
 
 ### `token`
 
@@ -309,11 +306,12 @@ That being said, if you wanted to tackle these yourself, I'd be a grateful PR re
 
 ### Merge semantics
 
-Updated files are never "merged", but simply overwrite whatever exists downstream.
-Likewise, deleted files are deleted downstream, unless they've since been modified or re-added there (see [`syncDeletions`](#syncdeletions)).
-_GitHub Graph_ is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository,
-with the understanding that copies shouldn't be modified.
-If several sources nonetheless sync the same file into one target, whichever synced most recently wins.
+Files are never "merged": each is either the source's, and follows the source, or the target's, and is left alone
+(see [which files are synced](#which-files-are-synced)).
+A file changed downstream stops following the source altogether, however small the change.
+_GitHub Graph_ is only intended for use when the responsibility for each file can be unambiguously associated with a single source repository.
+If several sources nonetheless sync the same file into one target, the first to sync it keeps it,
+unless another has had the very same version.
 
 ### Platform support
 
