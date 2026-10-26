@@ -101,13 +101,14 @@ done
 # 2. Delete from the target repository all files which were synced from the source repository,
 #    but which have since been deleted from the source repository.
 #    Files in the ignore list or outside of SOURCE_ROOT are skipped.
-#    As the target may have files of its own with the same names, a file is only deleted if:
-#      a) It originated from the source.
-#         i.e. When it was last added to the target, it matched a version which the source once had.
-#      b) It hasn't been re-added to the target since being deleted from the source.
-#         i.e. It was last added to the target before it was deleted from the source.
-#      c) It hasn't been modified in the target.
+#    As the target may have files of its own with the same names, a file is only deleted if
+#    its last change in the target came from the source, before the source deleted it:
+#      a) It hasn't been modified in the target.
 #         i.e. It currently matches a version which the source once had.
+#      b) It hasn't been changed or re-added in the target since being deleted from the source.
+#         i.e. It was last changed in the target before it was deleted from the source.
+#    So a file which the target had first, but which the source then overwrote, is the source's
+#    from then on, as is one which an earlier source first added: only its last change counts.
 # =================================================================================================
 
 if [[ "$SYNC_DELETIONS" != "true" ]]; then
@@ -147,21 +148,13 @@ for file in "${!DELETED_AT[@]}"; do
   dest=$(target_relative_path "$file")
   current=$(git -C target rev-parse -q --verify "HEAD:$dest") || continue
 
-  # Find when the file was last added to the target, and with which version.
-  added_at="" added_blob=""
-  while IFS= read -r -d '' timestamp && IFS= read -r -d '' blob && IFS= read -r -d '' status && IFS= read -r -d '' path; do
-    if [[ "$path" == "$dest" ]]; then
-      added_at="$timestamp" added_blob="$blob"
-      break
-    fi
-  done < <(file_history target --diff-filter=A -- ":(literal)$dest")
+  # When the file was last changed in the target, dated by when the change landed on the branch.
+  changed_at=$(git -C target log -1 --first-parent --format=%ct -- ":(literal)$dest")
 
-  if [[ -z "$added_at" || -z "${SOURCE_VERSIONS["$added_blob:$file"]+_}" ]]; then
-    echo "Kept: $file (didn't originate from the source)"
-  elif (( added_at >= deleted_at )); then
-    echo "Kept: $file (re-added after being deleted from the source)"
-  elif [[ -z "${SOURCE_VERSIONS["$current:$file"]+_}" ]]; then
-    echo "Kept: $file (modified after being synced from the source)"
+  if [[ -z "${SOURCE_VERSIONS["$current:$file"]+_}" ]]; then
+    echo "Kept: $file (doesn't match any version which the source had)"
+  elif [[ -z "$changed_at" ]] || (( changed_at >= deleted_at )); then
+    echo "Kept: $file (changed or re-added after being deleted from the source)"
   else
     rm "target/$dest"
     echo "Deleted: $file"
