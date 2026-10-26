@@ -30,7 +30,6 @@ jq -r '
   "TARGET_ROOT=\(.target.root)",
   "TARGET_URL=\(.target.url)",
   "IGNORE=\(.ignore | tojson)",
-  "SYNC_DELETIONS=\(.syncDeletions)",
   "PR_TITLE=\(.pullRequest.title)"
 ' <<< "$CHILD" >> "$GITHUB_ENV"
 

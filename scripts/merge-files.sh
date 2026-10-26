@@ -2,13 +2,23 @@
 set -euo pipefail
 
 # =================================================================================================
-# Locally applies updates from the source repository into the target repository.
+# Locally applies the changes from the source repository to the target repository.
+#
+# Every file which the source has ever had in SOURCE_ROOT is given the state it now has in the
+# source: its current version, or none if it was deleted. But the target may change a file itself,
+# or have a file of its own with the same name, so the source's state is only given to a file
+# whose last change in the target came from the source:
+#   a) Its state in the target is one which the source had before the target last changed it.
+#      A file's absence counts as a state which the source had once the source deleted it.
+#   b) The source has changed it since the target last changed it.
+# A file which the target never had is given the source's state.
+# So a file which the target has modified, deleted or re-added is left alone from then on,
+# as is one which the target had of its own before the source added it.
 #
 # Environment variables:
 #   - IGNORE: A JSON-formatted list of file paths to exclude from syncing.
 #   - SOURCE_ROOT: The root directory within the source repository to copy files from.
 #   - TARGET_ROOT: The root directory within the target repository to copy files into.
-#   - SYNC_DELETIONS: Whether to delete files from the target which were deleted from the source.
 #
 # Requirements:
 #   - source/ should already contain the source repository at the correct branch, with full history.
@@ -52,6 +62,7 @@ target_relative_path() {
 # Output the first-parent history of a branch, as NUL-separated records of the form:
 #   <commit time> <blob> <status> <file>
 # There is one record for each file changed by each commit, with renames treated as a deletion plus an addition.
+# The blob of a deleted file is ABSENT.
 # Following only the first parent means that each change is dated by when it actually landed on the branch.
 #   - $1: The repository directory.
 #   - $@: Any further arguments are passed to `git log`.
@@ -71,92 +82,67 @@ file_history() {
   )
 }
 
-# =================================================================================================
-# 1. Copy all files in the SOURCE_ROOT directory of the source repository
-#    to the TARGET_ROOT directory of the target repository.
-#    Files in the ignore list or outside of SOURCE_ROOT are skipped.
-#    Files which already exist in the target repository are replaced.
-# =================================================================================================
+# The state of a file which doesn't exist: the blob which git gives a deleted file, all zeros.
+ABSENT=$(git -C source hash-object --stdin < /dev/null | tr '0-9a-f' '0')
 
-# A set of names of all files which lie in the SOURCE_ROOT directory of the source repository.
-declare -A SOURCE_FILES
-while IFS= read -r line; do
-  SOURCE_FILES["$line"]=1;
-done < <(git -C source ls-files -- "$SOURCE_ROOT")
-
-# Copy every tracked file from the source to the target repository.
-for file in "${!SOURCE_FILES[@]}"; do
-  relative="${file#"$SOURCE_ROOT/"}"
-  if is_ignored "$relative"; then
-    echo "Skipped: $file"
-  else
-    dest=$(target_path "$file")
-    mkdir -p "$(dirname "$dest")"
-    cp "source/$file" "$dest"
-    echo "Copied: $file"
-  fi
-done
-
-# =================================================================================================
-# 2. Delete from the target repository all files which were synced from the source repository,
-#    but which have since been deleted from the source repository.
-#    Files in the ignore list or outside of SOURCE_ROOT are skipped.
-#    As the target may have files of its own with the same names, a file is only deleted if
-#    its last change in the target came from the source, before the source deleted it:
-#      a) It hasn't been modified in the target.
-#         i.e. It currently matches a version which the source once had.
-#      b) It hasn't been changed or re-added in the target since being deleted from the source.
-#         i.e. It was last changed in the target before it was deleted from the source.
-#    So a file which the target had first, but which the source then overwrote, is the source's
-#    from then on, as is one which an earlier source first added: only its last change counts.
-# =================================================================================================
-
-if [[ "$SYNC_DELETIONS" != "true" ]]; then
-  echo "Skipped deletions, as syncDeletions is disabled."
-  exit 0
-fi
-
-# Provenance can't be determined without the full history of both repositories.
+# Whose change was whose can't be told without the full history of both repositories.
 if [[ "$(git -C source rev-parse --is-shallow-repository)" == "true" ||
       "$(git -C target rev-parse --is-shallow-repository)" == "true" ]]; then
-  echo "::warning::Skipped deletions, as they require the full history of both repositories."
-  exit 0
+  echo "::error::Syncing requires the full history of both repositories."
+  exit 1
 fi
 
-# For every file in SOURCE_ROOT which was ever in the source repository:
-#   - DELETED_AT: The time at which it was deleted from the source, or empty if it still exists.
-#   - SOURCE_VERSIONS: The set of versions it has had in the source, keyed by "<blob>:<file>".
-declare -A DELETED_AT SOURCE_VERSIONS
+# =================================================================================================
+# 1. Read the history of every file which the source has ever had in SOURCE_ROOT:
+#      - STATE: Its state now, i.e. its current blob, or ABSENT if it has been deleted.
+#      - CHANGED: When the source last changed it.
+#      - SINCE: When the source first had each of its states, keyed by "<state>:<file>".
+# =================================================================================================
+
+declare -A STATE CHANGED SINCE
 while IFS= read -r -d '' timestamp && IFS= read -r -d '' blob && IFS= read -r -d '' status && IFS= read -r -d '' file; do
-  if [[ "$status" == "D" ]]; then
-    DELETED_AT["$file"]="$timestamp"
-  else
-    DELETED_AT["$file"]=""
-    SOURCE_VERSIONS["$blob:$file"]=1
-  fi
+  STATE["$file"]="$blob"
+  CHANGED["$file"]="$timestamp"
+  if [[ -z "${SINCE["$blob:$file"]+_}" ]]; then SINCE["$blob:$file"]="$timestamp"; fi
 done < <(file_history source --reverse -- "$SOURCE_ROOT")
 
-for file in "${!DELETED_AT[@]}"; do
-  deleted_at="${DELETED_AT[$file]}"
+# =================================================================================================
+# 2. Give each file in the target the state it has in the source, if the file is the source's.
+#    Files in the ignore list are skipped.
+# =================================================================================================
 
-  # Ignore because file still exists in the source.
-  if [[ -z "$deleted_at" ]]; then continue; fi
-  # Ignore because file is in ignore list.
-  if is_ignored "${file#"$SOURCE_ROOT/"}"; then continue; fi
+for file in "${!STATE[@]}"; do
+  if is_ignored "${file#"$SOURCE_ROOT/"}"; then
+    echo "Skipped: $file"
+    continue
+  fi
 
-  # Ignore because file doesn't exist in the target.
+  wanted="${STATE[$file]}"
   dest=$(target_relative_path "$file")
-  current=$(git -C target rev-parse -q --verify "HEAD:$dest") || continue
+  current=$(git -C target rev-parse -q --verify "HEAD:$dest") || current="$ABSENT"
+  if [[ "$current" == "$wanted" ]]; then continue; fi
 
-  # When the file was last changed in the target, dated by when the change landed on the branch.
+  # When the target last changed the file, dated by when the change landed on its branch,
+  # or nothing if it never had the file.
   changed_at=$(git -C target log -1 --first-parent --format=%ct -- ":(literal)$dest")
+  if [[ -n "$changed_at" ]]; then
+    since="${SINCE["$current:$file"]:-}"
+    source_changed_at="${CHANGED[$file]}"
+    if [[ -z "$since" ]] || (( since > changed_at )); then
+      echo "Kept: $file (changed in the target)"
+      continue
+    elif (( source_changed_at <= changed_at )); then
+      echo "Kept: $file (changed in the target since the source last changed it)"
+      continue
+    fi
+  fi
 
-  if [[ -z "${SOURCE_VERSIONS["$current:$file"]+_}" ]]; then
-    echo "Kept: $file (doesn't match any version which the source had)"
-  elif [[ -z "$changed_at" ]] || (( changed_at >= deleted_at )); then
-    echo "Kept: $file (changed or re-added after being deleted from the source)"
-  else
+  if [[ "$wanted" == "$ABSENT" ]]; then
     rm "target/$dest"
     echo "Deleted: $file"
+  else
+    mkdir -p "$(dirname "target/$dest")"
+    cp "source/$file" "target/$dest"
+    if [[ "$current" == "$ABSENT" ]]; then echo "Added: $file"; else echo "Updated: $file"; fi
   fi
 done

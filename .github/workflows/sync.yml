@@ -54,7 +54,7 @@ jobs:
           repository: SgtSwagrid/github-graph
           path: .github-graph
 
-      # Full history of both repositories is needed to sync deletions.
+      # Full history of both repositories is needed to tell the source's changes from the target's.
       - name: Checkout source
         uses: actions/checkout@v4
         with:
