@@ -148,14 +148,8 @@ for file in "${!DELETED_AT[@]}"; do
   dest=$(target_relative_path "$file")
   current=$(git -C target rev-parse -q --verify "HEAD:$dest") || continue
 
-  # Find when the file was last changed in the target, whether added or modified.
-  changed_at=""
-  while IFS= read -r -d '' timestamp && IFS= read -r -d '' blob && IFS= read -r -d '' status && IFS= read -r -d '' path; do
-    if [[ "$path" == "$dest" ]]; then
-      changed_at="$timestamp"
-      break
-    fi
-  done < <(file_history target --diff-filter=AM -- ":(literal)$dest")
+  # When the file was last changed in the target, dated by when the change landed on the branch.
+  changed_at=$(git -C target log -1 --first-parent --format=%ct -- ":(literal)$dest")
 
   if [[ -z "${SOURCE_VERSIONS["$current:$file"]+_}" ]]; then
     echo "Kept: $file (doesn't match any version which the source had)"
