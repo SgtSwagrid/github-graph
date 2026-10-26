@@ -21,9 +21,12 @@ shopt -s inherit_errexit
 #   - TARGET_ROOT:               The directory within the target repository being synced into.
 #   - TARGET_SYNC_BRANCH:        The name of the branch used to stage the pull request.
 #   - TARGET_LEGACY_SYNC_BRANCH: The branch which older versions staged these changes on, if any.
-#   - GITHUB_REPOSITORY_ID:      The ID of the source repository, as provided by GitHub Actions.
+#   - SYNC_TRAILER:              The trailer naming the source directory of a commit on the sync branch.
+#   - SYNC_KEY:                  The value of SYNC_TRAILER for this source directory.
+#   - SOURCE_TRAILER:            The trailer naming the source commit which a commit was taken from.
 #
 # Requirements:
+#   - source/ should contain the source repository at the commit which the changes were taken from.
 #   - target/ should contain the target repository at TARGET_BRANCH, with full history,
 #     and with the changes from the source directory already having been merged.
 # =================================================================================================
@@ -45,15 +48,6 @@ cd target
 git config user.name  "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 git remote set-url origin "${TARGET_URL/https:\/\//https://x-access-token:${GH_TOKEN}@}.git"
-
-# Each commit on the sync branch names the source directory it came from in a trailer.
-# This is a key rather than a name, as the source may be private while the target is public.
-# The key is "<source>/<directory>", where the first half is shared by every directory synced from
-# the same branch of the same source repository.
-TRAILER="GitHub-Graph-Sync"
-SOURCE_ID="${GITHUB_REPOSITORY_ID:-$SOURCE_REPOSITORY}"
-digest() { printf '%s\n' "$@" | sha256sum | cut -c1-12; }
-KEY="$(digest "$SOURCE_ID" "$SOURCE_BRANCH")/$(digest "$SOURCE_ID" "$SOURCE_BRANCH" "$SOURCE_ROOT" "$TARGET_ROOT")"
 
 # The pull request title once it holds the changes from sources with different titles,
 # and what separates the descriptions from each source.
@@ -116,33 +110,22 @@ latest_pull_request() {
 # Output the key in the trailer of a commit, or nothing if it isn't a commit from a source directory.
 #   - $1: The commit.
 key_of() {
-  git log -1 --format="%(trailers:key=$TRAILER,valueonly)" "$1" | sed -n 1p
+  git log -1 --format="%(trailers:key=$SYNC_TRAILER,valueonly)" "$1" | sed -n 1p
 }
-
-# The state of a file which doesn't exist: the blob which git gives a deleted file, all zeros.
-ABSENT=$(git hash-object --stdin < /dev/null | tr '0-9a-f' '0')
 
 # Apply the changes made by a commit on top of another, as whole files, and output the new commit,
 # or nothing if there are no changes left to make.
-# As in `merge-files.sh`, a file which the target has changed itself is left alone:
-# each change, whether it adds, updates or deletes a file, is only applied where the file is still
-# as it was when the change was made.
 #   - $1: The commit to apply the changes on top of.
 #   - $2: The commit which made the changes.
 replay() {
-  local onto="$1" commit="$2" index tree meta path new_mode old_blob new_blob current
+  local onto="$1" commit="$2" index tree meta path new_mode new_blob
   index="$(git rev-parse --git-dir)/github-graph-index"
   rm -f "$index"
   GIT_INDEX_FILE="$index" git read-tree "$onto"
   while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
-    read -r _ new_mode old_blob new_blob _ <<< "$meta"
-    current=$(git rev-parse -q --verify "$onto:$path") || current="$ABSENT"
-    if [[ "$current" == "$old_blob" ]]; then
-      # A deleted file has mode 0, which removes it.
-      printf '%s %s\t%s\0' "$new_mode" "$new_blob" "$path"
-    elif [[ "$current" != "$new_blob" ]]; then
-      echo "Kept: $path (changed in $TARGET_BRANCH since it was synced)" >&2
-    fi
+    read -r _ new_mode _ new_blob _ <<< "$meta"
+    # A deleted file has mode 0, which removes it.
+    printf '%s %s\t%s\0' "$new_mode" "$new_blob" "$path"
   done < <(git diff-tree -r -z --no-renames "$commit^" "$commit") |
     GIT_INDEX_FILE="$index" git update-index -z --index-info
   tree=$(GIT_INDEX_FILE="$index" git write-tree)
@@ -171,7 +154,7 @@ render() {
   for source in "${sources[@]}"; do
     title=$(git log -1 --format=%s "${latest[$source]}")
     body=$(git log -1 --format=%b "${latest[$source]}")
-    body="${body%"$TRAILER: "*}"
+    body="${body%"$SYNC_TRAILER: "*}"
     body="${body%"${body##*[![:space:]]}"}"
     if [[ -z "${seen["title:$title"]+_}" ]]; then titles+=("$title"); seen["title:$title"]=1; fi
     if [[ -n "$body" && -z "${seen["body:$body"]+_}" ]]; then bodies+=("$body"); seen["body:$body"]=1; fi
@@ -241,7 +224,10 @@ git add -A
 tree=$(git write-tree)
 CHANGES=""
 if [[ "$tree" != "$(git rev-parse "HEAD^{tree}")" ]]; then
-  CHANGES=$(printf '%s\n\n%s\n\n%s: %s\n' "$PR_TITLE" "$PR_BODY" "$TRAILER" "$KEY" | git commit-tree "$tree" -p HEAD)
+  # SOURCE_TRAILER comes last, as rendering a body drops everything from SYNC_TRAILER on.
+  CHANGES=$(printf '%s\n\n%s\n\n%s: %s\n%s: %s\n' "$PR_TITLE" "$PR_BODY" \
+    "$SYNC_TRAILER" "$SYNC_KEY" "$SOURCE_TRAILER" "$(git -C ../source rev-parse HEAD)" |
+    git commit-tree "$tree" -p HEAD)
 else
   echo "No changes to sync from $SOURCE_REPOSITORY."
 fi
@@ -271,7 +257,7 @@ for (( attempt = 1; ; attempt++ )); do
     building=true
     while IFS= read -r commit; do
       key=$(key_of "$commit")
-      if [[ -n "$key" && "$key" != "$KEY" ]]; then commits+=("$commit"); fi
+      if [[ -n "$key" && "$key" != "$SYNC_KEY" ]]; then commits+=("$commit"); fi
     done < <(git rev-list --reverse --no-merges "$TARGET_REF..$old")
     if (( ${#commits[@]} > 0 )); then
       echo "Keeping ${#commits[@]} commit(s) from other source directories on $TARGET_SYNC_BRANCH."
