@@ -54,7 +54,7 @@ jobs:
           repository: SgtSwagrid/github-graph
           path: .github-graph
 
-      # Full history of both repositories is needed to tell the source's changes from the target's.
+      # Full history of the source is needed to find what it has deleted since the last sync.
       - name: Checkout source
         uses: actions/checkout@v4
         with:
@@ -73,6 +73,12 @@ jobs:
 
       - name: Load config
         run: bash .github-graph/scripts/load-config.sh '${{ toJson(matrix.child) }}'
+
+      - name: Find last sync
+        env:
+          GH_TOKEN: ${{ secrets[matrix.child.token] }}
+          SOURCE_BEFORE: ${{ github.event.before }}
+        run: bash .github-graph/scripts/last-sync.sh
 
       - name: Merge files
         run: bash .github-graph/scripts/merge-files.sh

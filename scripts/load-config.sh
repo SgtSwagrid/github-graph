@@ -47,3 +47,19 @@ echo "TARGET_SYNC_BRANCH=${TARGET_SYNC_BRANCH:-sync/github-graph/$TARGET_BRANCH}
 PR_BODY=$(jq -r '.pullRequest.body' <<< "$CHILD")
 delimiter="$(openssl rand -hex 8)"
 { echo "PR_BODY<<$delimiter"; echo "$PR_BODY"; echo "$delimiter"; } >> "$GITHUB_ENV"
+
+# Each commit on the sync branch names the source directory it came from in a trailer, SYNC_TRAILER.
+# This is a key rather than a name, as the source may be private while the target is public.
+# The key is "<source>/<directory>", where the first half is shared by every directory synced from
+# the same branch of the same source repository.
+# A second trailer, SOURCE_TRAILER, names the source commit which the changes were taken from.
+SOURCE_ID="${GITHUB_REPOSITORY_ID:-$(jq -r '.source.repository' <<< "$CHILD")}"
+SOURCE_BRANCH=$(jq -r '.source.branch' <<< "$CHILD")
+SOURCE_ROOT=$(jq -r '.source.root' <<< "$CHILD")
+TARGET_ROOT=$(jq -r '.target.root' <<< "$CHILD")
+digest() { printf '%s\n' "$@" | sha256sum | cut -c1-12; }
+{
+  echo "SYNC_TRAILER=GitHub-Graph-Sync"
+  echo "SYNC_KEY=$(digest "$SOURCE_ID" "$SOURCE_BRANCH")/$(digest "$SOURCE_ID" "$SOURCE_BRANCH" "$SOURCE_ROOT" "$TARGET_ROOT")"
+  echo "SOURCE_TRAILER=GitHub-Graph-Source"
+} >> "$GITHUB_ENV"
