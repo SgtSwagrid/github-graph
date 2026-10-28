@@ -39,6 +39,7 @@ name: Sync
 
 on:
   push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -47,9 +48,9 @@ jobs:
     secrets: inherit
 ```
 
-As written, this will trigger the synchronisation procedure when (any branch of) the source repository is pushed to.
-It doesn't matter now if you only want to sync from one branch (e.g. `main`), this is configured later.
-Nevertheless, feel free to modify the trigger to suit your needs.
+As written, this will trigger the synchronisation procedure when `main` is pushed to.
+Which branches are synced from is configured later (see [`source`](#source)),
+but list each of them here too: a push to any other branch would find nothing to sync, yet still start a job to find that out.
 
 ### 2. Add a configuration file
 
@@ -81,6 +82,8 @@ This is true both in the [git](https://git-scm.com/docs/git-push) sense and in t
 Changes _pushed_ to the source are _eagerly_ propagated (i.e. _pushed_) downstream.
 A [GitHub Actions](https://github.com/features/actions) workflow in the source repository listens for pushes to a designated branch and directory,
 in response to which pull requests are automatically opened.
+A push syncs only into the targets whose source directory it changed,
+or into every target if it changed the configuration file, as does running the workflow by hand.
 
 ### Which files are synced
 
@@ -92,7 +95,8 @@ A file deleted from the source is deleted from the target once, by the first syn
 Each sync deletes the files which the source has deleted since the source commit of the last sync from it that the target merged,
 which each sync's commit records in a trailer, and which is read back from the latest merged pull request.
 So:
-- **a sync which is skipped or fails is made up for by the next**, as it covers everything since;
+- **a sync which is skipped or fails is made up for by the next**, as it covers everything since
+  (run the workflow by hand to sync every target without waiting for a push to its source directory);
 - **a file which the target re-adds after a deletion was merged is left alone**, as later syncs start after it;
 - **a pull request closed without merging leaves its deletions to be proposed again**, so a deletion is only declined for good by ignoring the file.
 
