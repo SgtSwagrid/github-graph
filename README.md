@@ -56,7 +56,7 @@ but list each of them here too: a push to any other branch would find nothing to
 
 Create the configuration file `.github/graph.json` in your source repository.
 This is where you can enumerate all downstream targets that depend on this repository.
-See [configuration](#configuration) below for details.
+See [configuration](#%EF%B8%8F-configuration) below for details.
 
 ### 3. Create a Personal Access Token
 
@@ -280,7 +280,7 @@ so a private source is only named downstream if its own title or body names it.
 Git Submodules is a similar, in-built solution whereby repositories can be nested as subdirectories of other repositories.
 If this meets your use case, then use Submodules instead.
 However, a key limitation is that nested repositories have to be fully contained within isolated directories.
-In practice, and in fact for most of the example [use cases](#use-cases) listed, you'll instead want this content to be mixed in with everything else.
+In practice, and in fact for most of the example [use cases](#-use-cases) listed, you'll instead want this content to be mixed in with everything else.
 
 ### What's wrong with external references?
 
